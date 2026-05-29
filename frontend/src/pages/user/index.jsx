@@ -1,10 +1,15 @@
-import { useLocation, useNavigate } from 'react-router-dom'
-import Button from '../../components/Button'
+import { useNavigate } from 'react-router-dom'
+import Button from '../../components/Button/Button'
+import useAuthStore from '../../store/useAuthStore'
 
 function UserHome() {
   const navigate = useNavigate()
-  const location = useLocation()
-  const user = location.state?.user
+  const { user, clearUser } = useAuthStore()
+
+  function handleLogout() {
+    clearUser()
+    navigate('/')
+  }
 
   return (
     <div className="min-h-svh bg-[#f8f9fa] text-[#191c1d]">
@@ -13,9 +18,14 @@ function UserHome() {
           <span className="font-display text-[18px] font-bold text-black sm:text-[22px]">
             rogāre
           </span>
-          <Button variant="secondary" onClick={() => navigate('/')}>
-            Back to landing
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="secondary" onClick={() => navigate('/')}>
+              Landing
+            </Button>
+            <Button variant="primary" onClick={handleLogout}>
+              Logout
+            </Button>
+          </div>
         </div>
       </header>
 

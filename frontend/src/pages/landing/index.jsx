@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import useAuthStore from '../../store/useAuthStore'
 import {
   Award,
   BriefcaseBusiness,
@@ -17,8 +18,8 @@ import {
   Terminal,
   Users,
 } from 'lucide-react'
-import Footer from '../../components/Footer'
-import Button from '../../components/Button'
+import Footer from '../../components/Footer/Footer'
+import Button from '../../components/Button/Button'
 import labSupportImage from '../../assets/lab-support.png'
 import LoginModal from './LoginModal'
 import FaqCard from './components/FaqCard'
@@ -56,12 +57,20 @@ function Landing() {
   const [status, setStatus] = useState('loading')
   const [errorMessage, setErrorMessage] = useState('')
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
-  const [currentUser, setCurrentUser] = useState(null)
   const navigate = useNavigate()
+  const { user: currentUser, setUser } = useAuthStore()
 
   function handleLogin(user) {
-    setCurrentUser(user)
-    navigate(user.role === 'ADMIN' ? '/admin' : '/user', { state: { user } })
+    setUser(user)
+    navigate(user.role === 'ADMIN' ? '/admin' : '/user')
+  }
+
+  function handleHeaderButtonClick() {
+    if (currentUser) {
+      navigate(currentUser.role === 'ADMIN' ? '/admin' : '/user')
+    } else {
+      setIsLoginModalOpen(true)
+    }
   }
 
   useEffect(() => {
@@ -183,7 +192,7 @@ function Landing() {
           >
             rogāre
           </a>
-          <Button variant="secondary" onClick={() => setIsLoginModalOpen(true)}>
+          <Button variant="secondary" onClick={handleHeaderButtonClick}>
             {currentUser?.name || 'Login'}
           </Button>
         </div>

@@ -47,11 +47,10 @@ Reusable components should use a folder per component:
 ```text
 src/components/Button/
 ├── Button.tsx
-├── README.md
-└── index.tsx
+└── README.md
 ```
 
-Use the component file for implementation, `index.tsx` or `index.jsx` as the public export, and `README.md` for usage notes when the component is shared or non-trivial.
+Use the component file for implementation (e.g. `Button.tsx`, `Footer.tsx`) and `README.md` for usage notes when the component is shared or non-trivial. Do NOT use `index.tsx` barrel exports for single-component folders — they add indirection with no benefit.
 
 ## Feature/Page Pattern
 
@@ -72,7 +71,7 @@ Keep feature-specific forms, tables, modals, hooks, constants, and services insi
 ## Conventions
 
 - Prefer feature-based organization over broad type-only folders for page logic.
-- Use barrel exports from `index.jsx` or `index.tsx` for component and feature entry points.
+- Use direct file imports for single-component folders. Keep barrel exports for folders with multiple named exports only.
 - Keep network calls and persistence logic out of React components; place them in `services/`.
 - Keep route definitions centralized in `src/routes.jsx`.
 - Mixed `.jsx`, `.tsx`, `.js`, and `.ts` files are acceptable, matching the reference structure.

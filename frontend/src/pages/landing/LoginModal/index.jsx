@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import Modal from '../../../components/Modal'
+import Modal from '../../../components/Modal/Modal'
 import { authLogin } from './service'
 
 function LoginModal({ isOpen, onClose, onLogin }) {

@@ -1,11 +1,19 @@
-import { useEffect } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { X } from 'lucide-react'
 
-function Modal({ children, isOpen, onClose, panelClassName = '', title = 'Dialog' }) {
+interface ModalProps {
+  children?: ReactNode
+  isOpen: boolean
+  onClose: () => void
+  panelClassName?: string
+  title?: string
+}
+
+function Modal({ children, isOpen, onClose, panelClassName = '', title = 'Dialog' }: ModalProps) {
   useEffect(() => {
     if (!isOpen) return undefined
 
-    const handleKeyDown = (event) => {
+    const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         onClose()
       }
