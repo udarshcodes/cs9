@@ -45,6 +45,8 @@ const iconComponents = {
   users: Users,
 }
 
+const emptySections = []
+
 function TagIcon({ name, className }) {
   const IconComponent = iconComponents[name] || Tag
 
@@ -63,8 +65,8 @@ function Tooltip({ label, children }) {
 }
 
 function Landing() {
-  const [sections, setSections] = useState([])
-  const [openKeys, setOpenKeys] = useState(new Set())
+  const [explicitOpenKeys, setExplicitOpenKeys] = useState(new Set())
+  const [closedKeys, setClosedKeys] = useState(new Set())
   const [query, setQuery] = useState('')
   const [activeSectionId, setActiveSectionId] = useState('')
   const [pageProgress, setPageProgress] = useState(0)
@@ -78,10 +80,19 @@ function Landing() {
   }
 
   function toggleFaq(accordionKey) {
-    setOpenKeys((prev) => {
+    const isOpen = openKeys.has(accordionKey)
+
+    setExplicitOpenKeys((prev) => {
       const next = new Set(prev)
-      if (next.has(accordionKey)) next.delete(accordionKey)
+      if (isOpen) next.delete(accordionKey)
       else next.add(accordionKey)
+      return next
+    })
+
+    setClosedKeys((prev) => {
+      const next = new Set(prev)
+      if (isOpen) next.add(accordionKey)
+      else next.delete(accordionKey)
       return next
     })
   }
@@ -89,10 +100,18 @@ function Landing() {
   function toggleSection(section) {
     const keys = section.faqs.map((faq) => `${section.id}:${faq.id}`)
     const allOpen = keys.length > 0 && keys.every((k) => openKeys.has(k))
-    setOpenKeys((prev) => {
+
+    setExplicitOpenKeys((prev) => {
       const next = new Set(prev)
       if (allOpen) keys.forEach((k) => next.delete(k))
       else keys.forEach((k) => next.add(k))
+      return next
+    })
+
+    setClosedKeys((prev) => {
+      const next = new Set(prev)
+      if (allOpen) keys.forEach((k) => next.add(k))
+      else keys.forEach((k) => next.delete(k))
       return next
     })
   }
@@ -110,30 +129,19 @@ function Landing() {
   }
 
   // TanStack Query — FAQs (cached, staleTime=Infinity)
-  const { data: faqSections = [], isLoading, isError, error } = useQuery({
+  const { data: faqSections = emptySections, isLoading, isError, error } = useQuery({
     queryKey: ['landing-faqs'],
     queryFn: () => getFaqSections(),
     staleTime: Infinity,
   })
 
-  // Sync TanStack Query result into local state (used by rest of component)
-  useEffect(() => {
-    if (!isLoading && !isError && faqSections.length > 0) {
-      setSections(faqSections)
-      setActiveSectionId(faqSections[0]?.id || '')
-      setOpenKeys(
-        faqSections[0]?.faqs[0]
-          ? new Set([`${faqSections[0].id}:${faqSections[0].faqs[0].id}`])
-          : new Set(),
-      )
-    }
-    if (isError) {
-      setSections([])
-      setOpenKeys(new Set())
-      setActiveSectionId('')
-      setPageProgress(0)
-    }
-  }, [isLoading, isError, faqSections])
+  const sections = isError ? emptySections : faqSections
+  const firstSection = sections[0]
+  const firstFaq = firstSection?.faqs[0]
+  const firstFaqKey = firstSection && firstFaq ? `${firstSection.id}:${firstFaq.id}` : ''
+  const openKeys = new Set(firstFaqKey ? [firstFaqKey] : [])
+  closedKeys.forEach((key) => openKeys.delete(key))
+  explicitOpenKeys.forEach((key) => openKeys.add(key))
 
   useEffect(() => {
     if (currentUser) {
@@ -231,6 +239,8 @@ function Landing() {
   }, [query, sections])
 
   const hasSections = sections.length > 0
+  const currentActiveSectionId = activeSectionId || sections[0]?.id || ''
+  const visiblePageProgress = hasSections ? pageProgress : 0
 
   return (
     <div className="min-h-svh bg-[#f8f9fa] text-[#191c1d]">
@@ -261,11 +271,11 @@ function Landing() {
             <span className="absolute bottom-2 left-0 top-2 w-px bg-[#d9dadb]" aria-hidden="true" />
             <span
               className="absolute left-0 top-2 w-px bg-black transition-[height] duration-200"
-              style={{ height: `calc((100% - 16px) * ${pageProgress / 100})` }}
+              style={{ height: `calc((100% - 16px) * ${visiblePageProgress / 100})` }}
               aria-hidden="true"
             />
             {sections.map((section) => {
-              const isActive = activeSectionId === section.id
+              const isActive = currentActiveSectionId === section.id
 
               return (
                 <a
@@ -290,13 +300,13 @@ function Landing() {
                 FAQ Tags
               </p>
               <p className="text-[12px] font-semibold text-[#444748]">
-                {Math.round(pageProgress)}%
+                {Math.round(visiblePageProgress)}%
               </p>
             </div>
             <div className="mb-4 h-px overflow-hidden bg-[#d9dadb]">
               <div
                 className="h-full bg-black transition-[width] duration-200"
-                style={{ width: `${pageProgress}%` }}
+                style={{ width: `${visiblePageProgress}%` }}
               />
             </div>
             <nav
@@ -304,7 +314,7 @@ function Landing() {
               className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6"
             >
               {sections.map((section) => {
-                const isActive = activeSectionId === section.id
+                const isActive = currentActiveSectionId === section.id
 
                 return (
                   <a
