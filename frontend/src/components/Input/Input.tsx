@@ -1,4 +1,5 @@
 import type { InputHTMLAttributes } from 'react'
+import { Input as HuiInput } from '@headlessui/react'
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   className?: string
@@ -6,7 +7,7 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 
 function Input({ className = '', ...props }: InputProps) {
   return (
-    <input
+    <HuiInput
       className={`h-11 w-full rounded-lg border border-[#d1d5db] bg-white px-4 text-[13px] shadow-sm outline-none transition placeholder:text-[#9da1a1] focus:border-black focus:ring-1 focus:ring-black disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
       {...props}
     />

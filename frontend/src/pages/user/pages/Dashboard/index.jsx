@@ -47,7 +47,7 @@ function DashboardPage() {
     try {
       const sort         = activeTab === 'Trending' ? 'trending' : 'latest'
       const status       = activeTab === 'Unanswered' ? 'unanswered'
-                         : activeTab === 'Resolved'   ? 'resolved'
+                         : activeTab === 'Closed'   ? 'resolved'
                          : ''
       const createdAfter = activeTab === 'Recent'
         ? new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
@@ -101,7 +101,7 @@ function DashboardPage() {
 
   // ── Filtered + counts ────────────────────────────────────────────────────────
   const filtered = queries.filter(q => {
-    if (activeTab === 'Resolved'    && q.status !== 'Resolved')                      return false
+    if (activeTab === 'Closed'    && q.status !== 'Closed')                      return false
     if (activeTab === 'Unanswered'  && !['Active', 'In Progress'].includes(q.status)) return false
     return true
   })
@@ -111,7 +111,7 @@ function DashboardPage() {
     'Trending':   queries.filter(q => q.upvotes > 0).length,
     'Recent':      queries.length,
     'Unanswered':  queries.filter(q => ['Active', 'In Progress'].includes(q.status)).length,
-    'Resolved':    queries.filter(q => q.status === 'Resolved').length,
+    'Closed':    queries.filter(q => q.status === 'Closed').length,
   }
 
   return (
@@ -127,7 +127,7 @@ function DashboardPage() {
           {sidebarNav !== 'My Queries' && (
             <div className="mb-6 flex items-center border-b border-[#c4c7c7] pb-4">
               <div className="flex gap-7">
-                {['All Queries', 'Trending', 'Recent', 'Unanswered', 'Resolved'].map(tab => (
+                {['All Queries', 'Trending', 'Recent', 'Unanswered', 'Closed'].map(tab => (
                   <button
                     key={tab}
                     type="button"

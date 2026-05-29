@@ -1,4 +1,5 @@
-import { useEffect, type ReactNode } from 'react'
+import { type ReactNode } from 'react'
+import { Dialog, DialogPanel } from '@headlessui/react'
 import { X } from 'lucide-react'
 
 interface ModalProps {
@@ -19,25 +20,6 @@ function Modal({
   title = 'Dialog',
   position = 'center',
 }: ModalProps) {
-  useEffect(() => {
-    if (!isOpen || position === 'top-right') return undefined
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose()
-      }
-    }
-
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    document.addEventListener('keydown', handleKeyDown)
-
-    return () => {
-      document.body.style.overflow = previousOverflow
-      document.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [isOpen, onClose, position])
-
   if (!isOpen) {
     return null
   }
@@ -64,28 +46,27 @@ function Modal({
   }
 
   return (
-    <div
-      aria-label={title}
-      aria-modal="true"
-      className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/10 px-4"
-      onClick={onClose}
-      role="dialog"
-    >
-      <div
-        className={`relative w-full max-w-[440px] rounded-lg bg-white p-8 shadow-2xl sm:p-12 ${panelClassName}`}
-        onClick={(event) => event.stopPropagation()}
-      >
-        <button
-          aria-label="Close dialog"
-          className="absolute right-5 top-5 flex h-10 w-10 items-center justify-center rounded-full text-[#6b7280] transition hover:bg-black/5 hover:text-black focus:outline-none focus:ring-2 focus:ring-black"
-          onClick={onClose}
-          type="button"
+    <Dialog open={isOpen} onClose={onClose} aria-label={title} className="relative z-[1000]">
+      {/* Backdrop */}
+      <div className="fixed inset-0 bg-black/10" aria-hidden="true" />
+
+      {/* Centered panel */}
+      <div className="fixed inset-0 flex items-center justify-center px-4">
+        <DialogPanel
+          className={`relative w-full max-w-[440px] rounded-lg bg-white p-8 shadow-2xl sm:p-12 ${panelClassName}`}
         >
-          <X aria-hidden="true" className="h-5 w-5" strokeWidth={1.8} />
-        </button>
-        {children}
+          <button
+            aria-label="Close dialog"
+            className="absolute right-5 top-5 flex h-10 w-10 items-center justify-center rounded-full text-[#6b7280] transition hover:bg-black/5 hover:text-black focus:outline-none focus:ring-2 focus:ring-black"
+            onClick={onClose}
+            type="button"
+          >
+            <X aria-hidden="true" className="h-5 w-5" strokeWidth={1.8} />
+          </button>
+          {children}
+        </DialogPanel>
       </div>
-    </div>
+    </Dialog>
   )
 }
 

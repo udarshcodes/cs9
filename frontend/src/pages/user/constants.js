@@ -3,7 +3,7 @@ import { Tag } from 'lucide-react'
 export const STATUS_CONFIG = {
   Active:        { color: '#8c6a40' },
   'In Progress': { color: '#4b5563' },
-  Resolved:      { color: '#16a34a' },
+  Closed:        { color: '#16a34a' },
 }
 
 // Deterministic colour palette for dynamically-loaded tags.

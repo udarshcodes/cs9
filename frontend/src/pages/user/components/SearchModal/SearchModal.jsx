@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { Dialog, DialogPanel } from '@headlessui/react'
 import { Search, Tag, X } from 'lucide-react'
 import { styleForTag } from '../../constants'
 
@@ -12,16 +13,13 @@ function SearchModal({ open, categories = [], initialSearch = '', initialTags = 
   const [pendingTags, setPendingTags] = useState(initialTags)
   const inputRef = useRef(null)
 
-  // Seed draft state + focus when the modal opens
+  // Seed draft state when the modal opens
   useEffect(() => {
     if (open) {
       setSearchInput(initialSearch)
       setPendingTags(initialTags)
-      setTimeout(() => inputRef.current?.focus(), 50)
     }
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  if (!open) return null
 
   function toggleTag(tag) {
     setPendingTags(prev => (prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]))
@@ -39,14 +37,9 @@ function SearchModal({ open, categories = [], initialSearch = '', initialTags = 
   }
 
   return (
-    <div
-      className="fixed inset-0 z-[2000] flex items-start justify-center bg-black/40 pt-[120px] backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <div
-        className="flex w-full max-w-[1040px] flex-col rounded-2xl bg-white p-8 shadow-2xl"
-        onClick={e => e.stopPropagation()}
-      >
+    <Dialog open={open} onClose={onClose} className="relative z-[2000]">
+      <div className="fixed inset-0 flex items-start justify-center bg-black/40 pt-[120px] backdrop-blur-sm">
+        <DialogPanel className="flex w-full max-w-[1040px] flex-col rounded-2xl bg-white p-8 shadow-2xl">
         {/* Search input */}
         <div className="mb-8 flex items-center gap-3 rounded-xl border-2 border-[#8c6a40] bg-white px-5 py-3.5 shadow-sm">
           <Search className="h-5 w-5 shrink-0 text-[#8c6a40]" strokeWidth={1.8} />
@@ -132,8 +125,9 @@ function SearchModal({ open, categories = [], initialSearch = '', initialTags = 
             })}
           </div>
         )}
+        </DialogPanel>
       </div>
-    </div>
+    </Dialog>
   )
 }
 

@@ -82,6 +82,20 @@ async function seedUsers() {
       role: 'USER',
       spark_points: 15,
     },
+    {
+      name: 'Karan Patel',
+      email: 'karan.patel@gmail.com',
+      password: 'User1234@',
+      role: 'USER',
+      spark_points: 33,
+    },
+    {
+      name: 'Meera Iyer',
+      email: 'meera.iyer@gmail.com',
+      password: 'User1234@',
+      role: 'USER',
+      spark_points: 19,
+    },
   ]
 
   const created = []
@@ -107,16 +121,9 @@ async function seedUsers() {
       spark_points: u.spark_points,
     })
 
-    // Map role
     const role = await ensureRole(u.role)
     await UserRoleMapper.create({ user_id: user.user_id, role_id: role.role_id })
-
-    // Create profile
     await UserProfile.create({ user_id: user.user_id, display_name: user.name })
-
-    // EXPERT_VERIFIED spark events are awarded via the awardSpark service
-    // when an admin/resolver is verified — no manual transaction needed here.
-    // Their spark_points are set directly above.
 
     console.log(`  ✓ Created user: ${u.email}`)
     created.push(user)
@@ -192,9 +199,8 @@ async function seedFAQs(adminUser, resolverUser) {
       last_activity_at: new Date(),
     })
 
-    // Each FAQ gets exactly one canonical answer
     const answerBody = `<p>This is the official answer verified by the Lab Coordinator. For further assistance, please contact the support team via the <strong>Lab Support</strong> channel on the platform.</p>`
-    const answer = await Answer.create({
+    await Answer.create({
       question_id: question.question_id,
       question_kind: 'faq',
       author_id: resolverUser.user_id,
@@ -219,59 +225,127 @@ async function seedFAQs(adminUser, resolverUser) {
 // ─── Discussion Questions ─────────────────────────────────────────────────────
 
 async function seedDiscussions(users) {
+  const resolverUser = users[1]
+
   const discussions = [
+    // UNANSWERED
     {
       title: 'Can I delay my joining date by 2 weeks due to college exams?',
       body: '<p>My college end-semester exams are scheduled until the 15th of July. My offer letter says joining on 1st July. Is it possible to request a delayed joining? Will this affect my selection status?</p>',
       tags: ['joining', 'exams', 'delay'],
-      author_id: users[2].user_id, // Priya
+      author_id: users[2].user_id,
       spark_bounty: 20,
+      status: 'answered',
     },
     {
       title: 'My NOC is signed by the Dean — will that be accepted?',
       body: '<p>My college doesn\'t have a designated principal at the moment. The Dean has signed my NOC. Is this acceptable or do I need to get it re-signed by an authorized principal?</p>',
       tags: ['noc', 'document', 'dean'],
-      author_id: users[3].user_id, // Arjun
+      author_id: users[3].user_id,
       spark_bounty: 0,
+      status: 'unanswered',
     },
     {
       title: 'ViBe platform login not working — getting 403 error',
       body: '<p>I\'ve been trying to log into the ViBe platform since morning but I keep getting a 403 Forbidden error. I\'ve reset my password twice. Is there a known outage? My institute email is arjun.nair@student.iitrpr.ac.in</p>',
       tags: ['vibe', 'login', 'error', 'platform'],
-      author_id: users[3].user_id, // Arjun
+      author_id: users[3].user_id,
       spark_bounty: 10,
+      status: 'unanswered',
     },
     {
       title: 'How should team formation be done for group projects?',
       body: '<p>Are teams formed by the coordinators or do we need to form our own teams? If we form our own, what is the maximum team size? Also, is cross-discipline teaming allowed?</p>',
       tags: ['team', 'project', 'team-formation'],
-      author_id: users[4].user_id, // Sneha
+      author_id: users[4].user_id,
       spark_bounty: 0,
+      status: 'unanswered',
     },
     {
       title: 'Can I convert from part-time to full-time internship mid-way?',
       body: '<p>I initially selected part-time because of my coursework load. Now I realize I can manage full-time. Is it possible to convert mid-way? What is the process?</p>',
       tags: ['part-time', 'full-time', 'conversion'],
-      author_id: users[2].user_id, // Priya
+      author_id: users[2].user_id,
       spark_bounty: 15,
+      status: 'unanswered',
+    },
+    // UNANSWERED — MORE
+    {
+      title: 'Is there a stipend advance option available for the first month?',
+      body: '<p>The hostel rent is due before my first stipend arrives. Is there any provision for a stipend advance or early payment? The amount would be around ₹5,000–₹8,000.</p>',
+      tags: ['stipend', 'payment', 'advance'],
+      author_id: users[5].user_id,
+      spark_bounty: 10,
+      status: 'unanswered',
+    },
+    {
+      title: 'Can external interns from other IITs join via this program?',
+      body: '<p>I\'m a student at another IIT interested in the VINS program. Is the internship open to external candidates or only for IIT Ropar students?</p>',
+      tags: ['eligibility', 'external', 'iit'],
+      author_id: users[6].user_id,
+      spark_bounty: 0,
+      status: 'unanswered',
+    },
+    {
+      title: 'What is the weekly time commitment expected from part-time interns?',
+      body: '<p>I want to take up a part-time internship alongside my semester. How many hours per week are expected on average? Is there flexibility in scheduling?</p>',
+      tags: ['part-time', 'hours', 'schedule'],
+      author_id: users[4].user_id,
+      spark_bounty: 0,
+      status: 'unanswered',
+    },
+    // ANSWERED (not resolved)
+    {
+      title: 'Is there a travel allowance for interns reporting to campus?',
+      body: '<p>I\'m coming from a different city. Will the program reimburse travel costs for reporting to campus at the beginning of the internship?</p>',
+      tags: ['travel', 'allowance', 'reimbursement'],
+      author_id: users[5].user_id,
+      spark_bounty: 0,
+      status: 'answered',
+    },
+    {
+      title: 'Can I use the lab facilities after 6 PM for my project work?',
+      body: '<p>I want to work on my project in the lab after regular hours. Is there extended lab access available? Who do I need to ask for permission?</p>',
+      tags: ['lab', 'facilities', 'access', 'hours'],
+      author_id: users[6].user_id,
+      spark_bounty: 5,
+      status: 'answered',
+    },
+    // RESOLVED
+    {
+      title: 'How do I update my display name shown on the platform?',
+      body: '<p>I logged in with my institute email and my full name is showing. I want to use a shorter display name on the platform. Where can I change this?</p>',
+      tags: ['profile', 'display-name', 'settings'],
+      author_id: users[2].user_id,
+      spark_bounty: 0,
+      status: 'closed',
+    },
+    {
+      title: 'I forgot my ViBe password — how do I reset it?',
+      body: '<p>The "forgot password" link on ViBe keeps redirecting me to the IIT Ropar SSO page and I\'m stuck in a loop. How do I actually reset my password?</p>',
+      tags: ['password', 'login', 'reset', 'vibe'],
+      author_id: users[4].user_id,
+      spark_bounty: 0,
+      status: 'closed',
     },
   ]
 
-  const resolverUser = users[1] // Ravi (resolver)
   const created = []
   for (const disc of discussions) {
     const question = await Question.create({
-      ...disc,
-      kind: 'community',
+      title: disc.title,
+      body: disc.body,
       body_plain: stripBody(disc.body),
+      tags: disc.tags,
+      kind: 'community',
+      author_id: disc.author_id,
       moderation_status: 'approved',
-      status: 'unanswered',
-      upvotes: Math.floor(Math.random() * 10),
-      view_count: Math.floor(Math.random() * 50) + 5,
+      status: disc.status,
+      upvotes: Math.floor(Math.random() * 15),
+      view_count: Math.floor(Math.random() * 80) + 5,
       answer_count: 0,
     })
 
-    // Reserve bounty if any
     if (disc.spark_bounty > 0) {
       await SparkTransaction.create({
         user_id: disc.author_id,
@@ -282,8 +356,8 @@ async function seedDiscussions(users) {
       })
     }
 
-    console.log(`  ✓ Created discussion: ${question.title.slice(0, 40)}...`)
-    created.push({ question, discussion: disc })
+    console.log(`  ✓ Created discussion [${disc.status}]: ${question.title.slice(0, 40)}…`)
+    created.push({ question, disc })
   }
 
   return created
@@ -291,103 +365,238 @@ async function seedDiscussions(users) {
 
 // ─── Answers ──────────────────────────────────────────────────────────────────
 
-async function seedAnswers(faqs, discussions, users) {
-  // Answer to NOC delay question — answered by resolver (users[1])
-  const delayQuestion = discussions[0].question
-  const resolverUser = users[1] // Ravi Sharma (RESOLVER)
+async function seedAnswers(discussions, users) {
+  const resolverUser = users[1]
+  const allAnswers = []
 
-  const answerBody1 = `<p>Yes, a delayed joining of up to <strong>2 weeks</strong> can be granted under exceptional circumstances including ongoing examinations. You need to:</p>
+  // NOC delay — answered by resolver
+  const delayQ = discussions[0].question
+  const delayA = `<p>Yes, a delayed joining of up to <strong>2 weeks</strong> can be granted under exceptional circumstances including ongoing examinations. You need to:</p>
 <ol><li>Submit a formal delay request via the ViBe platform before the joining date</li><li>Attach a scanned copy of your exam timetable as supporting document</li><li>Wait for approval from the Lab Coordinator (usually within 48 hours)</li></ol>
-<p>Please note that delays beyond 2 weeks may require fresh approval from the program director.</p>`
+<p>Delays beyond 2 weeks may require fresh approval from the program director.</p>`
 
-  const answer1 = await Answer.create({
-    question_id: delayQuestion.question_id,
+  const ans1 = await Answer.create({
+    question_id: delayQ.question_id,
     question_kind: 'community',
     author_id: resolverUser.user_id,
     author_role: 'RESOLVER',
-    body: answerBody1,
-    body_plain: stripBody(answerBody1),
+    body: delayA,
+    body_plain: stripBody(delayA),
     is_expert: true,
     upvotes: 8,
     score: 8,
     moderation_status: 'approved',
   })
+  allAnswers.push({ answer: ans1, question: delayQ })
 
-  // Update question
   await Question.updateOne(
-    { question_id: delayQuestion.question_id },
-    {
-      $set: { status: 'answered', answer_count: 1, has_expert_answer: true },
-      $inc: { upvotes: 3 },
-    },
+    { question_id: delayQ.question_id },
+    { $set: { status: 'answered', answer_count: 1, has_expert_answer: true } },
   )
 
-  // Award spark
-  await SparkTransaction.create({
-    user_id: resolverUser.user_id,
-    action: 'SUBMIT_ANSWER',
-    points: 5,
-    reference_id: answer1.answer_id,
-    reference_type: 'answer',
+  // Travel allowance — answered by resolver
+  const travelQ = discussions[8].question
+  const travelA = `<p>Currently, there is <strong>no travel allowance</strong> provided for reporting to campus. However, you can claim <strong>local transport reimbursement</strong> (up to ₹500/month) for any official travel undertaken during your internship. Keep all receipts and submit them via the ViBe platform by the last week of each month.</p>`
+  const ans2 = await Answer.create({
+    question_id: travelQ.question_id,
+    question_kind: 'community',
+    author_id: resolverUser.user_id,
+    author_role: 'RESOLVER',
+    body: travelA,
+    body_plain: stripBody(travelA),
+    is_expert: true,
+    upvotes: 5,
+    score: 5,
+    moderation_status: 'approved',
   })
+  allAnswers.push({ answer: ans2, question: travelQ })
 
-  console.log(`  ✓ Created answer for discussion`)
+  await Question.updateOne(
+    { question_id: travelQ.question_id },
+    { $set: { status: 'answered', answer_count: 1 } },
+  )
 
-  return [answer1]
+  // Lab access — answered by another user
+  const labQ = discussions[9].question
+  const labA = `<p>Extended lab access is available up to <strong>9:00 PM</strong> on weekdays. You need to:</p>
+<ol><li>Get your mentor\'s approval email</li><li>Submit it to the lab administrator (lab.admin@iitrpr.ac.in)</li><li>Your access card will be updated within 24 hours</li></ol>
+<p>Weekend access requires special permission from the department head.</p>`
+  const ans3 = await Answer.create({
+    question_id: labQ.question_id,
+    question_kind: 'community',
+    author_id: users[2].user_id,
+    author_role: 'USER',
+    body: labA,
+    body_plain: stripBody(labA),
+    is_expert: false,
+    upvotes: 3,
+    score: 3,
+    moderation_status: 'approved',
+  })
+  allAnswers.push({ answer: ans3, question: labQ })
+
+  await Question.updateOne(
+    { question_id: labQ.question_id },
+    { $set: { status: 'answered', answer_count: 1 } },
+  )
+
+  // Display name — resolved with user answering
+  const displayQ = discussions[10].question
+  const displayA = `<p>Go to your <strong>Profile Settings</strong> page (click your avatar in the top-right). You can change your display name there — it will be shown to other users throughout the platform. Your institute email name remains unchanged for login purposes.</p>`
+  const ans4 = await Answer.create({
+    question_id: displayQ.question_id,
+    question_kind: 'community',
+    author_id: users[2].user_id,
+    author_role: 'USER',
+    body: displayA,
+    body_plain: stripBody(displayA),
+    is_expert: false,
+    is_accepted: true,
+    upvotes: 6,
+    score: 6,
+    moderation_status: 'approved',
+  })
+  allAnswers.push({ answer: ans4, question: displayQ })
+
+  await Question.updateOne(
+    { question_id: displayQ.question_id },
+    { $set: { status: 'closed', answer_count: 1, has_expert_answer: false } },
+  )
+
+  // Password reset — resolved
+  const pwdQ = discussions[11].question
+  const pwdA = `<p>The password reset issue is a known bug with the SSO redirect. Here\'s the workaround:</p>
+<ol><li>Go directly to <code>vibe.iitrpr.ac.in/auth/reset</code></li><li>Enter your institute email and submit</li><li>Check your email for the reset link (also check spam)</li></ol>
+<p>If it still doesn\'t work, email <strong>lab.admin@iitrpr.ac.in</strong> with your enrollment number.</p>`
+  const ans5 = await Answer.create({
+    question_id: pwdQ.question_id,
+    question_kind: 'community',
+    author_id: resolverUser.user_id,
+    author_role: 'RESOLVER',
+    body: pwdA,
+    body_plain: stripBody(pwdA),
+    is_expert: true,
+    is_accepted: true,
+    upvotes: 12,
+    score: 12,
+    moderation_status: 'approved',
+  })
+  allAnswers.push({ answer: ans5, question: pwdQ })
+
+  await Question.updateOne(
+    { question_id: pwdQ.question_id },
+    { $set: { status: 'closed', answer_count: 1, has_expert_answer: true } },
+  )
+
+  console.log(`  ✓ Created 5 answers across discussions`)
+  return allAnswers
 }
 
 // ─── Comments ─────────────────────────────────────────────────────────────────
 
-async function seedComments(answer, users) {
-  const askerUser = users[2] // Priya Mehta (the user who asked the question)
-  const resolverUser = users[1] // Ravi Sharma (RESOLVER)
+async function seedComments(allAnswers, users) {
+  const asker = users[2]
+  const anotherUser = users[4]
+  const resolverUser = users[1]
+  const yetAnother = users[5]
 
-  const comments = [
-    {
-      question_id: answer.question_id,
-      answer_id: answer.answer_id,
-      author_id: askerUser.user_id,
-      author_role: 'USER',
-      body: 'Thank you! I have already submitted my exam timetable. Hope it gets approved quickly.',
-      depth: 0,
-    },
-    {
-      question_id: answer.question_id,
-      answer_id: answer.answer_id,
-      author_id: resolverUser.user_id,
-      author_role: 'RESOLVER',
-      body: '@user Check your ViBe dashboard — approval usually comes within 24 hours during exam period.',
-      depth: 1,
-      parent_id: null, // set after first comment is created below
-    },
-  ]
-
-  // Create first comment
-  const comment1 = await Comment.create({
-    ...comments[0],
-    body_plain: stripBody(comments[0].body),
+  // ── On NOC delay answer ──────────────────────────────────────────────────
+  const c1 = await Comment.create({
+    question_id: allAnswers[0].question.question_id,
+    answer_id: allAnswers[0].answer.answer_id,
+    author_id: asker.user_id,
+    author_role: 'USER',
+    body: 'Thank you! I have already submitted my exam timetable. Hope it gets approved quickly.',
+    body_plain: 'Thank you! I have already submitted my exam timetable. Hope it gets approved quickly.',
+    depth: 0,
     moderation_status: 'approved',
   })
 
-  // Create second comment as reply to first
-  const comment2 = await Comment.create({
-    ...comments[1],
-    root_comment_id: comment1.comment_id,
-    parent_id: comment1.comment_id,
-    body_plain: stripBody(comments[1].body),
+  const c2 = await Comment.create({
+    question_id: allAnswers[0].question.question_id,
+    answer_id: allAnswers[0].answer.answer_id,
+    author_id: resolverUser.user_id,
+    author_role: 'RESOLVER',
+    body: '@user Check your ViBe dashboard — approval usually comes within 24 hours during exam periods.',
+    body_plain: '@user Check your ViBe dashboard — approval usually comes within 24 hours during exam periods.',
+    depth: 1,
+    parent_id: c1.comment_id,
+    root_comment_id: c1.comment_id,
     moderation_status: 'approved',
   })
 
-  // Update reply counts
-  await Comment.updateOne({ comment_id: comment1.comment_id }, { $set: { reply_count: 1 } })
+  const c3 = await Comment.create({
+    question_id: allAnswers[0].question.question_id,
+    answer_id: allAnswers[0].answer.answer_id,
+    author_id: asker.user_id,
+    author_role: 'USER',
+    body: '@Ravi Sharma Approved! Got the confirmation email just now. Thank you so much!',
+    body_plain: '@Ravi Sharma Approved! Got the confirmation email just now. Thank you so much!',
+    depth: 1,
+    parent_id: c2.comment_id,
+    root_comment_id: c1.comment_id,
+    moderation_status: 'approved',
+  })
 
-  // Update answer comment count
+  await Comment.updateOne({ comment_id: c1.comment_id }, { $set: { reply_count: 2 } })
   await Answer.updateOne(
-    { answer_id: answer.answer_id },
+    { answer_id: allAnswers[0].answer.answer_id },
+    { $set: { comment_count: 3, top_level_comment_count: 1 } },
+  )
+
+  console.log(`  ✓ NOC delay: 3 comments (depth 0 → reply → reply)`)
+
+  // ── On lab access answer ─────────────────────────────────────────────────
+  const c4 = await Comment.create({
+    question_id: allAnswers[2].question.question_id,
+    answer_id: allAnswers[2].answer.answer_id,
+    author_id: yetAnother.user_id,
+    author_role: 'USER',
+    body: 'What about GPU access for deep learning projects? Is that also covered under extended lab access?',
+    body_plain: 'What about GPU access for deep learning projects? Is that also covered under extended lab access?',
+    depth: 0,
+    moderation_status: 'approved',
+  })
+
+  const c5 = await Comment.create({
+    question_id: allAnswers[2].question.question_id,
+    answer_id: allAnswers[2].answer.answer_id,
+    author_id: resolverUser.user_id,
+    author_role: 'RESOLVER',
+    body: '@user GPU access requires a separate application. Fill the form at vibe.iitrpr.ac.in/lab/gpu-request and it takes about 3 days to process.',
+    body_plain: '@user GPU access requires a separate application. Fill the form at vibe.iitrpr.ac.in/lab/gpu-request and it takes about 3 days to process.',
+    depth: 1,
+    parent_id: c4.comment_id,
+    root_comment_id: c4.comment_id,
+    moderation_status: 'approved',
+  })
+
+  await Comment.updateOne({ comment_id: c4.comment_id }, { $set: { reply_count: 1 } })
+  await Answer.updateOne(
+    { answer_id: allAnswers[2].answer.answer_id },
     { $set: { comment_count: 2, top_level_comment_count: 1 } },
   )
 
-  console.log(`  ✓ Created 2 comments`)
+  console.log(`  ✓ Lab access: 2 comments (depth 0 → reply)`)
+
+  // ── On password reset answer ───────────────────────────────────────────────
+  const c6 = await Comment.create({
+    question_id: allAnswers[4].question.question_id,
+    answer_id: allAnswers[4].answer.answer_id,
+    author_id: anotherUser.user_id,
+    author_role: 'USER',
+    body: 'The direct reset URL worked for me! Should update the ViBe documentation with this workaround.',
+    body_plain: 'The direct reset URL worked for me! Should update the ViBe documentation with this workaround.',
+    depth: 0,
+    moderation_status: 'approved',
+  })
+
+  await Answer.updateOne(
+    { answer_id: allAnswers[4].answer.answer_id },
+    { $set: { comment_count: 1, top_level_comment_count: 1 } },
+  )
+
+  console.log(`  ✓ Password reset: 1 comment`)
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
@@ -398,40 +607,25 @@ async function main() {
   try {
     await connectDB()
 
-    // 1. Seed roles
     console.log('\n📦 Seeding roles...')
-    const roles = await seedRoles()
-
-    // 2. Seed users
-    console.log('\n📦 Seeding users...')
     const users = await seedUsers()
-    const adminUser = users[0]
-    const resolverUser = users[1]
 
-    // 3. Seed FAQs
     console.log('\n📦 Seeding FAQs...')
-    const faqs = await seedFAQs(adminUser, resolverUser)
+    await seedFAQs(users[0], users[1])
 
-    // 4. Seed Discussions
     console.log('\n📦 Seeding Discussions...')
     const discussions = await seedDiscussions(users)
 
-    // 5. Seed Answers
     console.log('\n📦 Seeding Answers...')
-    const answers = await seedAnswers(faqs, discussions, users)
+    const allAnswers = await seedAnswers(discussions, users)
 
-    // 6. Seed Comments
     console.log('\n📦 Seeding Comments...')
-    if (answers[0]) {
-      await seedComments(answers[0], users)
-    }
+    await seedComments(allAnswers, users)
 
-    // 7. Summary
     console.log('\n✅ Seed complete!\n')
     console.log('Admin login:')
     console.log('  Email:    admin@gmail.com')
     console.log('  Password: Admin123@\n')
-
     console.log('Other test accounts:')
     console.log('  Resolver: ravi.sharma@gmail.com / Resolver123@')
     console.log('  User:     priya.mehta@gmail.com / User1234@\n')

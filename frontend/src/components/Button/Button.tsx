@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import { Button as HuiButton } from '@headlessui/react'
 import { twMerge } from 'tailwind-merge'
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost'
@@ -29,9 +30,9 @@ function Button({
   }
 
   return (
-    <button type={type} className={twMerge(base, variants[variant], className)} {...props}>
+    <HuiButton type={type} className={twMerge(base, variants[variant], className)} {...props}>
       {children}
-    </button>
+    </HuiButton>
   )
 }
 

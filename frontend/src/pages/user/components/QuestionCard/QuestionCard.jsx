@@ -6,7 +6,7 @@ function QuestionCard({ query, onUpvote, onClick }) {
   const { color: statusColor } = STATUS_CONFIG[query.status] ?? STATUS_CONFIG.Active
   const StatusIcon = query.status === 'Active' ? CheckCircle
     : query.status === 'In Progress' ? Clock : CheckCircle
-  const isResolved = query.status === 'Resolved'
+  const isResolved = query.status === 'Closed'
 
   return (
     <div className="mb-4 flex rounded-xl border border-[#9ca3af] bg-white p-5">
