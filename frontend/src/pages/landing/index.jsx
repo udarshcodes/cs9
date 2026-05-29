@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import useAuthStore from '../../store/useAuthStore'
 import {
@@ -67,8 +68,6 @@ function Landing() {
   const [query, setQuery] = useState('')
   const [activeSectionId, setActiveSectionId] = useState('')
   const [pageProgress, setPageProgress] = useState(0)
-  const [status, setStatus] = useState('loading')
-  const [errorMessage, setErrorMessage] = useState('')
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
   const navigate = useNavigate()
   const { user: currentUser, setUser } = useAuthStore()
@@ -110,46 +109,31 @@ function Landing() {
     }
   }
 
+  // TanStack Query — FAQs (cached, staleTime=Infinity)
+  const { data: faqSections = [], isLoading, isError, error } = useQuery({
+    queryKey: ['landing-faqs'],
+    queryFn: () => getFaqSections(),
+    staleTime: Infinity,
+  })
+
+  // Sync TanStack Query result into local state (used by rest of component)
   useEffect(() => {
-    const controller = new AbortController()
-
-    async function loadFaqs() {
-      try {
-        setStatus('loading')
-        setErrorMessage('')
-
-        const nextSections = await getFaqSections(controller.signal)
-
-        setSections(nextSections)
-        setActiveSectionId(nextSections[0]?.id || '')
-        setOpenKeys(
-          nextSections[0]?.faqs[0]
-            ? new Set([`${nextSections[0].id}:${nextSections[0].faqs[0].id}`])
-            : new Set(),
-        )
-        setStatus('ready')
-      } catch (error) {
-        if (
-          error.name === 'AbortError' ||
-          error.name === 'CanceledError' ||
-          error.code === 'ERR_CANCELED'
-        ) {
-          return
-        }
-
-        setSections([])
-        setOpenKeys(new Set())
-        setActiveSectionId('')
-        setPageProgress(0)
-        setStatus('error')
-        setErrorMessage(error.message || 'Unable to load FAQs')
-      }
+    if (!isLoading && !isError && faqSections.length > 0) {
+      setSections(faqSections)
+      setActiveSectionId(faqSections[0]?.id || '')
+      setOpenKeys(
+        faqSections[0]?.faqs[0]
+          ? new Set([`${faqSections[0].id}:${faqSections[0].faqs[0].id}`])
+          : new Set(),
+      )
     }
-
-    loadFaqs()
-
-    return () => controller.abort()
-  }, [])
+    if (isError) {
+      setSections([])
+      setOpenKeys(new Set())
+      setActiveSectionId('')
+      setPageProgress(0)
+    }
+  }, [isLoading, isError, faqSections])
 
   useEffect(() => {
     if (currentUser) {
@@ -356,24 +340,24 @@ function Landing() {
             />
           </label>
 
-          {status === 'loading' && (
+          {isLoading && (
             <section className="rounded-lg border border-[#c4c7c7] bg-white p-6">
               <p className="text-[14px] leading-7 text-[#444748]">Loading FAQ data...</p>
             </section>
           )}
 
-          {status === 'error' && (
+          {isError && (
             <section className="rounded-lg border border-[#c4c7c7] bg-white p-6">
               <h1 className="mb-2 font-display text-[18px] font-semibold leading-snug text-black">
                 FAQ data is unavailable
               </h1>
               <p className="text-[14px] leading-7 text-[#444748]">
-                {errorMessage}. Make sure the backend is running.
+                {error?.message || 'Unable to load FAQs'}. Make sure the backend is running.
               </p>
             </section>
           )}
 
-          {status === 'ready' && hasSections && (
+          {!isLoading && !isError && hasSections && (
             <div className="flex flex-col gap-8">
               {visibleSections.map((section) => (
                 <section
@@ -449,7 +433,7 @@ function Landing() {
             </div>
           )}
 
-          {status === 'ready' && !hasSections && (
+          {!isLoading && !isError && !hasSections && (
             <section className="rounded-lg border border-[#c4c7c7] bg-white p-6">
               <h1 className="mb-2 font-display text-[18px] font-semibold leading-snug text-black">
                 No FAQs published

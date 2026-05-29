@@ -9,6 +9,7 @@ function DashboardHeader({
   user,
   initials,
   currentView,
+  showRaiseQuery = true,
   notifications,
   unreadCount,
   isDark,
@@ -34,7 +35,7 @@ function DashboardHeader({
 
       {/* Right-side action group */}
       <div className="flex items-center gap-6">
-        {currentView === 'dashboard' && (
+        {showRaiseQuery && (
           <Button
             variant="secondary"
             className="gap-2 rounded-lg border-transparent bg-[#8c6a40]/80 px-4 text-[11px] font-bold uppercase tracking-wide text-white hover:border-transparent hover:bg-[#7a5c35]"

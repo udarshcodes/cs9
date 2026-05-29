@@ -105,6 +105,7 @@ export async function createQuestion(req, res, next) {
       body: req.body.body,
       tags: req.body.tags,
       spark_bounty: sparkBounty,
+      is_anonymous: req.body.isAnonymous === true,
       author_id: req.user.userId,
     })
 
@@ -202,7 +203,10 @@ export async function listQuestions(req, res, next) {
 
     res.json({
       success: true,
-      questions: questions.map((q) => ({ ...q, author_name: nameById[q.author_id] || 'User' })),
+      questions: questions.map((q) => ({
+        ...q,
+        author_name: q.is_anonymous ? 'Anonymous' : nameById[q.author_id] || 'User',
+      })),
       pagination: paginationResult(page, limit, total),
     })
   } catch (error) {
@@ -290,9 +294,14 @@ export async function getQuestionById(req, res, next) {
     }).lean()
     const voteByAnswer = Object.fromEntries(myVotes.map((v) => [v.target_id, v.value]))
 
+    const questionObj = question.toObject()
+
     res.json({
       success: true,
-      question: withAuthor(question.toObject()),
+      question: {
+        ...questionObj,
+        author_name: questionObj.is_anonymous ? 'Anonymous' : nameById[questionObj.author_id] || 'User',
+      },
       answers: answers.map((a) => ({ ...withAuthor(a), my_vote: voteByAnswer[a.answer_id] || 0 })),
       comments: comments.map(withAuthor),
     })

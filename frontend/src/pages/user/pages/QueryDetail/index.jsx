@@ -5,8 +5,9 @@ import {
   AlertTriangle, MessageCircle, Loader,
 } from 'lucide-react'
 import ReportModal from '../../components/ReportModal/ReportModal'
+import AnswerComments from '../../components/AnswerComments/AnswerComments'
 import {
-  fetchQuestionDetail, fetchQuestions, postAnswer, voteAnswer, reportContent,
+  fetchQuestionDetail, fetchQuestions, postAnswer, voteAnswer, reportContent, postComment,
 } from '../../service'
 import { notifySuccess, notifyError } from '../../../../lib/notify'
 
@@ -70,6 +71,15 @@ function QueryDetailPage() {
       await load()
     } catch (err) {
       notifyError(err.response?.data?.message || 'Could not register your vote.')
+    }
+  }
+
+  async function handleComment(answerId, body, parentId) {
+    try {
+      await postComment(answerId, body, parentId)
+      await load()
+    } catch (err) {
+      notifyError(err.response?.data?.message || 'Could not post comment.')
     }
   }
 
@@ -140,9 +150,15 @@ function QueryDetailPage() {
     )
   }
 
-  const { question, answers } = data
+  const { question, answers, comments = [] } = data
   const statusLabel = STATUS_LABEL[question.status] || 'Active'
   const isResolved = statusLabel === 'Resolved'
+
+  // Group comments by their parent answer
+  const commentsByAnswer = {}
+  for (const c of comments) {
+    (commentsByAnswer[c.answer_id] ||= []).push(c)
+  }
 
   const steps = [
     { label: 'Submitted', meta: fmtDate(question.created_at), done: true },
@@ -203,7 +219,14 @@ function QueryDetailPage() {
                 onVoteUp={() => handleVote(ans.answer_id, 'up')}
                 onVoteDown={() => handleVote(ans.answer_id, 'down')}
                 onReport={() => setReportTarget({ type: 'answer', id: ans.answer_id })}
-              />
+              >
+                <AnswerComments
+                  answerId={ans.answer_id}
+                  comments={commentsByAnswer[ans.answer_id] || []}
+                  currentUserId={user?.userId}
+                  onSubmit={handleComment}
+                />
+              </ThreadItem>
             ))}
 
             {/* Reply box */}
@@ -313,7 +336,7 @@ function QueryDetailPage() {
 
 // ── Thread item (OP or answer) ──────────────────────────────────────────────
 function ThreadItem({
-  authorName, isSelf, date, body, isOriginal, accepted, score, myVote = 0, onVoteUp, onVoteDown, onReport,
+  authorName, isSelf, date, body, isOriginal, accepted, score, myVote = 0, onVoteUp, onVoteDown, onReport, children,
 }) {
   const initials = initialsOf(authorName)
   return (
@@ -381,6 +404,9 @@ function ThreadItem({
             )}
           </div>
         )}
+
+        {/* Comments / replies under this answer */}
+        {!isOriginal && children}
       </div>
     </div>
   )

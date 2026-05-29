@@ -6,6 +6,7 @@ import FAQCategories from '../../components/FAQCategories/FAQCategories'
 import SearchModal from '../../components/SearchModal/SearchModal'
 import Button from '../../../../components/Button/Button'
 import { fetchQuestions, fetchQuestionTags, fetchUserContributions, voteQuestion, normalizeQuestion } from '../../service'
+import { queryClient } from '../../../../lib/queryClient'
 
 function DashboardPage() {
   const navigate = useNavigate()
@@ -47,7 +48,7 @@ function DashboardPage() {
     try {
       const sort         = activeTab === 'Trending' ? 'trending' : 'latest'
       const status       = activeTab === 'Unanswered' ? 'unanswered'
-                         : activeTab === 'Closed'   ? 'resolved'
+                         : activeTab === 'Resolved' ? 'resolved'
                          : ''
       const createdAfter = activeTab === 'Recent'
         ? new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
@@ -59,7 +60,10 @@ function DashboardPage() {
         tag: activeTags.join(','),
         sort, status, createdAfter, my,
       })
-      setQueries((data.questions || []).map(q => normalizeQuestion(q, user?.userId)))
+      const normalized = (data.questions || []).map(q => normalizeQuestion(q, user?.userId))
+      setQueries(normalized)
+      // Cache the loaded questions so Similar Queries (Raise Query page) can reuse them
+      queryClient.setQueryData(['dashboardQuestions'], normalized)
     } catch {
       setQueries([])
     } finally {
@@ -101,7 +105,7 @@ function DashboardPage() {
 
   // ── Filtered + counts ────────────────────────────────────────────────────────
   const filtered = queries.filter(q => {
-    if (activeTab === 'Closed'    && q.status !== 'Closed')                      return false
+    if (activeTab === 'Resolved'    && q.status !== 'Resolved')                      return false
     if (activeTab === 'Unanswered'  && !['Active', 'In Progress'].includes(q.status)) return false
     return true
   })
@@ -111,7 +115,7 @@ function DashboardPage() {
     'Trending':   queries.filter(q => q.upvotes > 0).length,
     'Recent':      queries.length,
     'Unanswered':  queries.filter(q => ['Active', 'In Progress'].includes(q.status)).length,
-    'Closed':    queries.filter(q => q.status === 'Closed').length,
+    'Resolved':    queries.filter(q => q.status === 'Resolved').length,
   }
 
   return (
@@ -127,7 +131,7 @@ function DashboardPage() {
           {sidebarNav !== 'My Queries' && (
             <div className="mb-6 flex items-center border-b border-[#c4c7c7] pb-4">
               <div className="flex gap-7">
-                {['All Queries', 'Trending', 'Recent', 'Unanswered', 'Closed'].map(tab => (
+                {['All Queries', 'Trending', 'Recent', 'Unanswered', 'Resolved'].map(tab => (
                   <button
                     key={tab}
                     type="button"
@@ -206,26 +210,36 @@ function DashboardPage() {
               <>
                 <div className="relative pl-5">
                   <div className="absolute bottom-2.5 left-1 top-2.5 w-px bg-[#d1d5db]" />
-                  {contributions.map((item, i) => {
+                  {[...contributions].reverse().map((item, i) => {
                     const color =
                       item.type === 'question' ? '#8c6a40'
                       : item.type === 'answer'  ? '#16a34a'
                       : '#3b82f6'
                     const label =
                       item.type === 'question' ? `Asked: ${item.title}`
-                      : item.type === 'answer'  ? `Answered: ${item.title || '…'}`
-                      : `Commented: ${item.title || '…'}`
+                      : item.type === 'answer'  ? `Answered: ${item.body || '…'}`
+                      : `Commented: ${item.body || '…'}`
                     return (
                       <div
                         key={i}
-                        className="relative mb-6 cursor-pointer transition hover:opacity-70"
+                        className="relative mb-2 cursor-pointer transition hover:opacity-70"
                         onClick={() => item.questionId && handleCardClick(item.questionId)}
                       >
                         <div
                           className="absolute -left-5 top-1.5 h-2 w-2 rounded-full"
                           style={{ background: color }}
                         />
-                        <h5 className="line-clamp-1 text-[13px] font-medium text-[#191c1d]">
+                        <h5
+                          className="text-[13px] font-medium text-[#191c1d]"
+                          style={{
+                            display: '-webkit-box',
+                            WebkitLineClamp: 1,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                          }}
+                          title={label}
+                        >
                           {label}
                         </h5>
                         <p className="mt-1 text-[10px] font-medium uppercase tracking-wide text-[#747878]">

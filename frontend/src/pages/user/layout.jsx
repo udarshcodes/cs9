@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react'
-import { Outlet, useNavigate } from 'react-router-dom'
+import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import DashboardHeader from './components/Header/DashboardHeader'
 import LeftPane from './components/LeftPane/LeftPane'
 import Footer from '../../components/Footer/Footer'
 import useAuthStore from '../../store/useAuthStore'
+import { queryClient } from '../../lib/queryClient'
 import { fetchNotifications, markAllNotifRead, logoutUser } from './service'
 
 function UserLayout() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { user, clearUser } = useAuthStore()
 
   const [notifications, setNotifications] = useState([])
@@ -67,6 +69,8 @@ function UserLayout() {
           onNavigate={label => {
             setSidebarNav(label)
             setCurrentView('dashboard')
+            // Clear cached questions so the dashboard refetches and Similar Queries resets
+            queryClient.removeQueries({ queryKey: ['dashboardQuestions'] })
             navigate('/dashboard')
           }}
         />
@@ -76,6 +80,7 @@ function UserLayout() {
             user={user}
             initials={initials}
             currentView={currentView}
+            showRaiseQuery={location.pathname !== '/raise-query'}
             notifications={notifications}
             unreadCount={unreadCount}
             isDark={isDark}

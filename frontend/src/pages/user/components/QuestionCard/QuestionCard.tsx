@@ -1,11 +1,44 @@
+import type { FC } from 'react'
 import { ChevronUp, MessageCircle, Reply, CheckCircle, Clock, Flag } from 'lucide-react'
 import { STATUS_CONFIG } from '../../constants'
 import { notifyError } from '../../../../lib/notify'
 
-function QuestionCard({ query, onUpvote, onClick }) {
+// ─── Types ──────────────────────────────────────────────────────────────────
+
+export interface QuestionTag {
+  label: string
+  type: 'dark'
+}
+
+export interface NormalizedQuestion {
+  id: string
+  upvotes: number
+  hasUpvoted: boolean
+  author: 'self' | 'other'
+  authorName: string
+  timestamp: number
+  tags: QuestionTag[]
+  meta: string
+  title: string
+  desc: string
+  comments: number
+  status: 'Active' | 'In Progress' | 'Resolved' | 'Closed'
+}
+
+interface QuestionCardProps {
+  query: NormalizedQuestion
+  onUpvote: (id: string) => void
+  onClick?: (id: string) => void
+}
+
+// ─── Component ─────────────────────────────────────────────────────────────
+
+const QuestionCard: FC<QuestionCardProps> = ({ query, onUpvote, onClick }) => {
   const { color: statusColor } = STATUS_CONFIG[query.status] ?? STATUS_CONFIG.Active
-  const StatusIcon = query.status === 'Active' ? CheckCircle
-    : query.status === 'In Progress' ? Clock : CheckCircle
+  const StatusIcon =
+    query.status === 'Active' ? CheckCircle
+    : query.status === 'In Progress' ? Clock
+    : CheckCircle
   const isResolved = query.status === 'Resolved'
 
   return (
@@ -57,7 +90,7 @@ function QuestionCard({ query, onUpvote, onClick }) {
           </span>
 
           {/* Reply / View — opens the replies view */}
-          <button
+<button
             type="button"
             className="flex items-center gap-1.5 transition hover:text-[#8c6a40]"
             onClick={() => onClick?.(query.id)}

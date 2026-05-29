@@ -1,0 +1,137 @@
+import { useState } from 'react'
+import { CornerDownRight, MessageSquare } from 'lucide-react'
+
+function initialsOf(name = '') {
+  return name.trim().split(/\s+/).map(n => n[0]).slice(0, 2).join('').toUpperCase() || 'U'
+}
+
+function fmtDate(d) {
+  return d ? new Date(d).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : ''
+}
+
+/**
+ * Threaded comments under a single answer.
+ *  - comments: all Comment docs for this answer (depth 0 = top-level, depth 1 = reply)
+ *  - onSubmit(answerId, body, parentId)
+ *
+ * NOTE: render helpers below are plain functions returning JSX (not nested
+ * components) so the reply <textarea> keeps focus across keystrokes.
+ */
+function AnswerComments({ answerId, comments = [], currentUserId, onSubmit }) {
+  const [replyTo, setReplyTo] = useState(null)   // parentId being replied to, or 'root'
+  const [value, setValue]     = useState('')
+  const [busy, setBusy]       = useState(false)
+
+  const topLevel = comments.filter(c => !c.parent_id)
+  const repliesOf = id => comments.filter(c => c.parent_id === id)
+
+  function openReply(parentKey) {
+    setReplyTo(parentKey)
+    setValue('')
+  }
+
+  async function submit(parentId) {
+    if (!value.trim()) return
+    setBusy(true)
+    try {
+      await onSubmit(answerId, value.trim(), parentId)
+      setValue('')
+      setReplyTo(null)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const replyBox = (parentId) => (
+    <div className="mt-2 flex items-start gap-2">
+      <textarea
+        autoFocus
+        value={value}
+        onChange={e => setValue(e.target.value)}
+        placeholder="Write a reply…"
+        className="min-h-[44px] w-full resize-y rounded-lg border border-[#e5e7eb] p-2.5 text-[12px] leading-5 text-[#191c1d] outline-none transition focus:border-[#8c6a40] focus:ring-2 focus:ring-[#8c6a40]/15"
+      />
+      <div className="flex flex-col gap-1.5">
+        <button
+          type="button"
+          onClick={() => submit(parentId)}
+          disabled={busy}
+          className="rounded-md bg-[#8c6a40] px-3 py-1.5 text-[11px] font-semibold text-white transition hover:bg-[#7a5c35] disabled:opacity-60"
+        >
+          {busy ? '…' : 'Reply'}
+        </button>
+        <button
+          type="button"
+          onClick={() => setReplyTo(null)}
+          className="rounded-md px-3 py-1.5 text-[11px] font-medium text-[#6b7280] transition hover:text-[#191c1d]"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  )
+
+  const commentRow = (c, isReply) => {
+    const isSelf = c.author_id === currentUserId
+    return (
+      <div className={`flex gap-2.5 ${isReply ? 'ml-7' : ''}`}>
+        <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#191c1d] text-[10px] font-bold text-white">
+          {initialsOf(c.author_name)}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline gap-2">
+            <span className="text-[12px] font-semibold text-[#191c1d]">
+              {c.author_name}{isSelf && ' (You)'}
+            </span>
+            <span className="text-[10px] text-[#9ca3af]">{fmtDate(c.created_at)}</span>
+          </div>
+          <p className="text-[12px] leading-5 text-[#4b5563]" dangerouslySetInnerHTML={{ __html: c.body }} />
+          {/* Only top-level comments can receive a (one-level) reply */}
+          {!isReply && (
+            <button
+              type="button"
+              onClick={() => openReply(c.comment_id)}
+              className="mt-1 flex items-center gap-1 text-[11px] font-medium text-[#9ca3af] transition hover:text-[#8c6a40]"
+            >
+              <CornerDownRight className="h-3 w-3" strokeWidth={1.8} /> Reply
+            </button>
+          )}
+          {replyTo === c.comment_id && replyBox(c.comment_id)}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="border-t border-[#f3f4f6] bg-white px-5 py-4">
+      {topLevel.length > 0 && (
+        <div className="mb-3 flex flex-col gap-4">
+          {topLevel.map(c => (
+            <div key={c.comment_id} className="flex flex-col gap-3">
+              {commentRow(c, false)}
+              {repliesOf(c.comment_id).map(r => (
+                <div key={r.comment_id}>{commentRow(r, true)}</div>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Add a comment to the answer */}
+      {replyTo === 'root' ? (
+        replyBox(null)
+      ) : (
+        <button
+          type="button"
+          onClick={() => openReply('root')}
+          className="flex items-center gap-1.5 text-[11px] font-semibold text-[#9ca3af] transition hover:text-[#8c6a40]"
+        >
+          <MessageSquare className="h-3.5 w-3.5" strokeWidth={1.8} />
+          {topLevel.length > 0 ? 'Add a comment' : 'Comment'}
+        </button>
+      )}
+    </div>
+  )
+}
+
+export default AnswerComments

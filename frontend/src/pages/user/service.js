@@ -84,6 +84,11 @@ export async function fetchQuestionTags() {
   return data.tags || []
 }
 
+export async function createQuestion({ title, body, tags = [], isAnonymous = false }) {
+  const { data } = await axisPrivate().post('/api/questions', { title, body, tags, isAnonymous })
+  return data // { success, questionId }
+}
+
 // ─── Question detail / thread ─────────────────────────────────────────────────
 
 export async function fetchQuestionDetail(questionId) {
@@ -98,6 +103,16 @@ export async function postAnswer(questionId, body) {
 
 export async function voteAnswer(answerId, vote) {
   const { data } = await axisPrivate().post(`/api/answers/${answerId}/vote`, { vote })
+  return data
+}
+
+export async function postComment(answerId, body, parentId = null) {
+  const { data } = await axisPrivate().post('/api/comments', {
+    targetType: 'answer',
+    targetId: answerId,
+    body,
+    parentId,
+  })
   return data
 }
 
