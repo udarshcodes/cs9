@@ -24,14 +24,11 @@ function mapStatus(q) {
 
 export function normalizeQuestion(q, currentUserId) {
   const tags = (q.tags || []).slice(0, 2).map(tag => ({
-    label: tag.toUpperCase(),
+    label: tag.charAt(0).toUpperCase() + tag.slice(1),
     type: 'dark',
   }))
 
-  const meta = [
-    timeAgo(q.created_at),
-    q.category || '',
-  ].filter(Boolean).join(' • ')
+  const meta = timeAgo(q.created_at)
 
   return {
     id:         q.question_id,
@@ -54,15 +51,21 @@ export async function fetchQuestions({
   search = '',
   tag = '',
   sort = 'latest',
+  status = '',
+  createdAfter = '',
   my = false,
   page = 1,
   limit = 30,
+  questionId = '',
 } = {}) {
   const params = new URLSearchParams({ kind: 'community', page, limit })
-  if (search)     params.set('search', search)
-  if (tag)        params.set('tag', tag)
-  if (sort)       params.set('sort', sort)
-  if (my)         params.set('my', '1')
+  if (search)       params.set('search', search)
+  if (tag)          params.set('tag', tag)
+  if (sort)         params.set('sort', sort)
+  if (status)       params.set('status', status)
+  if (createdAfter) params.set('createdAfter', createdAfter)
+  if (my)           params.set('my', '1')
+  if (questionId)   params.set('id', questionId)
 
   const { data } = await axisPrivate().get(`/api/questions?${params}`)
   return data
@@ -71,6 +74,11 @@ export async function fetchQuestions({
 export async function voteQuestion(questionId) {
   const { data } = await axisPrivate().post(`/api/questions/${questionId}/vote`)
   return data
+}
+
+export async function fetchQuestionTags() {
+  const { data } = await axisPrivate().get('/api/questions/tags')
+  return data.tags || []
 }
 
 // ─── Notifications ───────────────────────────────────────────────────────────
@@ -87,5 +95,30 @@ export async function markNotifRead(notificationId) {
 
 export async function markAllNotifRead() {
   const { data } = await axisPrivate().patch('/api/notifications/read-all')
+  return data
+}
+
+export async function fetchUserContributions(userId, limit = 10) {
+  const { data } = await axisPrivate().get(`/api/users/${userId}/contributions?limit=${limit}`)
+  return data
+}
+
+// ─── Profile ───────────────────────────────────────────────────────────────
+
+export async function fetchProfile() {
+  const { data } = await axisPrivate().get('/api/profile/me')
+  return data.profile
+}
+
+export async function updateProfile(updates) {
+  const { data } = await axisPrivate().patch('/api/profile/me', updates)
+  return data.profile
+}
+
+export async function changePassword(currentPassword, newPassword) {
+  const { data } = await axisPrivate().patch('/api/profile/password', {
+    currentPassword,
+    newPassword,
+  })
   return data
 }

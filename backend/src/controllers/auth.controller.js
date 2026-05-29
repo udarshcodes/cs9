@@ -39,7 +39,7 @@ function safeUser(user, roles) {
  *   4. contains digit
  *   5. contains special character
  */
-function validatePassword(password) {
+export function validatePassword(password) {
   if (typeof password !== 'string') {
     throw createHttpError(400, 'Password must be a string')
   }

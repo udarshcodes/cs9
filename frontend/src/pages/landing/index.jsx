@@ -25,7 +25,7 @@ import Button from '../../components/Button/Button'
 import labSupportImage from '../../assets/lab-support.png'
 import LoginModal from './LoginModal'
 import FaqCard from './components/FaqCard'
-import { getFaqSections } from './service'
+import { getCurrentUser, getFaqSections } from './service'
 
 const iconComponents = {
   award: Award,
@@ -75,7 +75,7 @@ function Landing() {
 
   function handleLogin(user) {
     setUser(user)
-    navigate(user.role === 'ADMIN' ? '/admin' : '/user')
+    navigate(user.role === 'ADMIN' ? '/admin' : '/dashboard')
   }
 
   function toggleFaq(accordionKey) {
@@ -100,7 +100,7 @@ function Landing() {
 
   function handleHeaderButtonClick() {
     if (currentUser) {
-      navigate(currentUser.role === 'ADMIN' ? '/admin' : '/user')
+      navigate(currentUser.role === 'ADMIN' ? '/admin' : '/dashboard')
     } else {
       setIsLoginModalOpen(true)
     }
@@ -146,6 +146,33 @@ function Landing() {
 
     return () => controller.abort()
   }, [])
+
+  useEffect(() => {
+    if (currentUser) {
+      return undefined
+    }
+
+    const controller = new AbortController()
+
+    async function hydrateCurrentUser() {
+      try {
+        const user = await getCurrentUser(controller.signal)
+        setUser(user)
+      } catch (error) {
+        if (
+          error.name === 'AbortError' ||
+          error.name === 'CanceledError' ||
+          error.code === 'ERR_CANCELED'
+        ) {
+          return
+        }
+      }
+    }
+
+    hydrateCurrentUser()
+
+    return () => controller.abort()
+  }, [currentUser, setUser])
 
   useEffect(() => {
     if (sections.length === 0) {
@@ -228,7 +255,7 @@ function Landing() {
             Rogāre
           </a>
           <Button variant="secondary" className="text-[10px] bg-[#8c6a40]/80 text-white" onClick={handleHeaderButtonClick}>
-            {currentUser?.name || 'Login'}
+            {currentUser ? 'Dashboard' : 'Login'}
           </Button>
         </div>
       </header>
@@ -447,7 +474,13 @@ function Landing() {
               Our support team is available during lab hours to help with specific onboarding or
               platform issues.
             </p>
-            <Button variant="secondary" className="text-[10px] border-transparent bg-[#8c6a40]/80 text-white hover:border-transparent hover:bg-[#7a5c35]">Contact Lab Support</Button>
+            <Button
+              variant="secondary"
+              className="text-[10px] border-transparent bg-[#8c6a40]/80 text-white hover:border-transparent hover:bg-[#7a5c35]"
+              onClick={() => currentUser ? navigate('/raise-query') : setIsLoginModalOpen(true)}
+            >
+              Contact Crowd for Solution
+            </Button>
           </div>
         </div>
       </section>

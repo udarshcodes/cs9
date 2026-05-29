@@ -7,7 +7,7 @@ const NAV_ITEMS = [
 
 function LeftPane({ sidebarNav, currentView, onNavigate }) {
   return (
-    <aside className="flex w-[240px] shrink-0 flex-col border-r border-[#c4c7c7] bg-[#f8f9fa] pt-8">
+    <aside className="flex w-70 shrink-0 flex-col border-r border-[#c4c7c7] bg-[#f8f9fa] pt-8">
 
       {/* Brand */}
       <button
@@ -15,7 +15,7 @@ function LeftPane({ sidebarNav, currentView, onNavigate }) {
         className="px-6 pb-8 text-left"
         onClick={() => onNavigate('Dashboard')}
       >
-        <h2 className="font-display mb-1 text-[18px] font-bold leading-tight text-[#8c6a40]">
+        <h2 className="font-display mb-1 text-[13px] font-medium leading-tight text-[#8c6a40]">
           Rogāre
         </h2>
         <p className="text-[11px] font-medium uppercase tracking-widest text-[#747878]">

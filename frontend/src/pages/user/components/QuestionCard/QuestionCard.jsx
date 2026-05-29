@@ -1,9 +1,7 @@
-import { useNavigate } from 'react-router-dom'
-import { ChevronUp, MessageCircle, CheckCircle, Clock } from 'lucide-react'
+import { ChevronUp, MessageCircle, Reply, CheckCircle, Clock } from 'lucide-react'
 import { STATUS_CONFIG } from '../../constants'
 
-function QuestionCard({ query, onUpvote }) {
-  const navigate = useNavigate()
+function QuestionCard({ query, onUpvote, onClick }) {
   const { color: statusColor } = STATUS_CONFIG[query.status] ?? STATUS_CONFIG.Active
   const StatusIcon = query.status === 'Active' ? CheckCircle
     : query.status === 'In Progress' ? Clock : CheckCircle
@@ -35,7 +33,7 @@ function QuestionCard({ query, onUpvote }) {
             {query.tags.map((tag, i) => (
               <span
                 key={i}
-                className="rounded bg-black px-2 py-0.5 text-[10px] font-bold uppercase text-white"
+                className="rounded bg-black px-2 py-0.5 text-[10px] font-semibold capitalize text-white"
               >
                 {tag.label}
               </span>
@@ -45,17 +43,25 @@ function QuestionCard({ query, onUpvote }) {
         </div>
 
         <h3 className="font-display mb-2 text-[18px] font-semibold text-[#191c1d]">{query.title}</h3>
-        <p className="mb-4 text-[13px] leading-6 text-[#444748]">{query.desc}</p>
+        <p className="mb-4 text-[13px] leading-6 text-[#444748]" dangerouslySetInnerHTML={{ __html: query.desc }} />
 
         <div className="flex items-center gap-5 text-[12px] font-medium text-[#444748]">
+          {/* Comments count — display only */}
+          <span className="flex items-center gap-1.5">
+            <MessageCircle className="h-3.5 w-3.5" strokeWidth={1.8} />
+            {query.comments} {query.comments === 1 ? 'comment' : 'comments'}
+          </span>
+
+          {/* Reply — opens the replies view */}
           <button
             type="button"
-            className="flex items-center gap-1.5 transition hover:text-black"
-            onClick={() => navigate(`/user/query/${query.id}`)}
+            className="flex items-center gap-1.5 transition hover:text-[#8c6a40]"
+            onClick={() => onClick?.(query.id)}
           >
-            <MessageCircle className="h-3.5 w-3.5" strokeWidth={1.8} />
-            {query.comments} comments
+            <Reply className="h-3.5 w-3.5" strokeWidth={1.8} />
+            Reply
           </button>
+
           <span className="flex items-center gap-1.5" style={{ color: statusColor }}>
             <StatusIcon className="h-3.5 w-3.5" strokeWidth={1.8} />
             {query.status}

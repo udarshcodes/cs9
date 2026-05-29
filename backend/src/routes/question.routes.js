@@ -7,6 +7,7 @@ import {
   getQuestionById,
   listPublishedFAQs,
   listQuestions,
+  listQuestionTags,
   updateQuestion,
   voteQuestion,
 } from '../controllers/question.controller.js'
@@ -127,6 +128,20 @@ router.post('/', checkRole('USER', 'RESOLVER', 'ADMIN'), createQuestion)
  *         description: Paginated list of questions
  */
 router.get('/', checkRole('USER', 'RESOLVER', 'ADMIN'), listQuestions)
+
+/**
+ * @openapi
+ * /api/questions/tags:
+ *   get:
+ *     summary: List distinct tags across community questions, ranked by usage
+ *     tags: [Questions]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Distinct tags with counts
+ */
+router.get('/tags', checkRole('USER', 'RESOLVER', 'ADMIN'), listQuestionTags)
 
 /**
  * @openapi

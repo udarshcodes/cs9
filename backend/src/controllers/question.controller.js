@@ -28,38 +28,10 @@ function normalizeTags(tags) {
 }
 
 const GENERIC_FAQ_TAGS = new Set(['faq', 'internship', 'vins'])
-const SECTION_LABELS = {
-  '1': 'VINS Overview',
-  '2': 'Timeline & Start Dates',
-  '3': 'NOC & Onboarding',
-  '4': 'Selection & Offer',
-  '5': 'Internship Work',
-  '6': 'Communication',
-  '7': 'Interview Issues',
-  '8': 'Certificate & Completion',
-  '9': 'Rosetta Journal',
-  '10': 'Coursework & Exemptions',
-  '11': 'Platform & Login',
-  '12': 'ViBe Platform',
-  '13': 'Team Formation',
-}
-
-function getCategoryLabel(category) {
-  const raw = String(category || '').trim()
-  const major = raw.split('.')[0]
-
-  return SECTION_LABELS[major] || SECTION_LABELS[raw] || raw || 'General'
-}
 
 function getFaqTags(faq) {
   const tags = normalizeTags(faq.tags)
-  const meaningfulTags = tags.filter((tag) => !GENERIC_FAQ_TAGS.has(tag.toLowerCase()))
-
-  if (meaningfulTags.length > 0) {
-    return meaningfulTags
-  }
-
-  return faq.category ? [getCategoryLabel(faq.category)] : tags
+  return tags.filter((tag) => !GENERIC_FAQ_TAGS.has(tag.toLowerCase()))
 }
 
 export async function listPublishedFAQs(req, res, next) {
@@ -69,7 +41,7 @@ export async function listPublishedFAQs(req, res, next) {
       status: 'published',
       visibility: 'public',
     })
-      .sort({ is_pinned: -1, category: 1, title: 1 })
+      .sort({ is_pinned: -1, title: 1 })
       .lean()
 
     const groupedByTag = new Map()
@@ -80,8 +52,6 @@ export async function listPublishedFAQs(req, res, next) {
         id: faq.question_id,
         question: faq.title,
         answer: faq.body,
-        category: getCategoryLabel(faq.category),
-        section: faq.category || null,
         tags,
         updatedAt: faq.updated_at,
       }
@@ -131,7 +101,6 @@ export async function createQuestion(req, res, next) {
     question = await Question.create({
       title: req.body.title,
       body: req.body.body,
-      category: req.body.category,
       tags: req.body.tags,
       spark_bounty: sparkBounty,
       author_id: req.user.userId,
@@ -166,25 +135,45 @@ export async function listQuestions(req, res, next) {
     if (req.query.kind) {
       filter.kind = req.query.kind
     }
-    if (req.query.category) {
-      filter.category = req.query.category
-    }
+
     if (req.query.tag) {
-      filter.tags = req.query.tag
+      // Selected categories filter over tags (comma-separated → match any)
+      const tags = String(req.query.tag).split(',').map((t) => t.trim()).filter(Boolean)
+      if (tags.length) {
+        filter.tags = tags.length > 1 ? { $in: tags } : tags[0]
+      }
     }
     if (req.query.status === 'open') {
       filter.status = { $in: ['unanswered', 'answered'] }
+    } else if (req.query.status === 'resolved') {
+      filter.status = { $in: ['answered', 'closed'] }
     } else if (req.query.status) {
       filter.status = req.query.status
     }
     if (req.query.search) {
+      // Keyword search over question text (title/body) and answer text
       const search = new RegExp(escapeRegex(String(req.query.search)), 'i')
-      filter.$or = [{ title: search }, { body: search }, { tags: search }]
+      const answerQuestionIds = await Answer.find({ body: search }).distinct('question_id')
+      filter.$or = [
+        { title: search },
+        { body: search },
+        { question_id: { $in: answerQuestionIds } },
+      ]
+    }
+    if (req.query.createdAfter) {
+      const since = new Date(req.query.createdAfter)
+      if (!Number.isNaN(since.getTime())) {
+        filter.created_at = { $gte: since }
+      }
     }
 
     // Support ?my=1 to fetch only the current user's questions
     if (req.query.my === '1') {
       filter.author_id = req.user.userId
+    }
+
+    if (req.query.id) {
+      filter.question_id = req.query.id
     }
 
     if (!isAdmin(req)) {
@@ -196,7 +185,7 @@ export async function listQuestions(req, res, next) {
       }
     }
 
-    const sort = req.query.sort === 'trending' ? { upvotes: -1 } : { created_at: -1 }
+    const sort = req.query.sort === 'trending' ? { answer_count: -1, upvotes: -1 } : { created_at: -1 }
     const [questions, total] = await Promise.all([
       Question.find(filter).sort(sort).skip(skip).limit(limit).lean(),
       Question.countDocuments(filter),
@@ -206,6 +195,32 @@ export async function listQuestions(req, res, next) {
       success: true,
       questions,
       pagination: paginationResult(page, limit, total),
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+/** Distinct tags across published community questions, ranked by usage. */
+export async function listQuestionTags(req, res, next) {
+  try {
+    const tags = await Question.aggregate([
+      {
+        $match: {
+          kind: 'community',
+          status: { $ne: 'removed' },
+          moderation_status: 'approved',
+        },
+      },
+      { $unwind: '$tags' },
+      { $group: { _id: '$tags', count: { $sum: 1 } } },
+      { $sort: { count: -1, _id: 1 } },
+      { $limit: 12 },
+    ])
+
+    res.json({
+      success: true,
+      tags: tags.map((t) => ({ tag: t._id, count: t.count })),
     })
   } catch (error) {
     next(error)
@@ -266,7 +281,7 @@ export async function updateQuestion(req, res, next) {
       throw createHttpError(409, 'Question locked or resolved')
     }
 
-    for (const field of ['title', 'body', 'category', 'tags']) {
+    for (const field of ['title', 'body', 'tags']) {
       if (req.body[field] !== undefined) {
         question[field] = req.body[field]
       }

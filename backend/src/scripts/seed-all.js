@@ -132,7 +132,6 @@ async function seedFAQs(adminUser, resolverUser) {
     {
       title: 'What is the NOC deadline for the internship program?',
       body: '<p>The NOC (No Objection Certificate) must be submitted within <strong>7 days</strong> of receiving your offer letter. Failure to do so may result in your seat being offered to the waitlist candidate. Please ensure the NOC is signed by your college principal or authorized signatory and uploaded via the ViBe platform under the NOC section.</p>',
-      category: '3',
       tags: ['noc', 'deadline', 'documents'],
       slug: 'noc-deadline-internship',
       status: 'published',
@@ -141,7 +140,6 @@ async function seedFAQs(adminUser, resolverUser) {
     {
       title: 'When does the internship start date officially begin?',
       body: '<p>The official internship start date is mentioned in your offer letter, generally the <strong>1st of the month</strong> following your selection. For example, if you are selected in June, your internship begins on <strong>1st July</strong>. Any deviation requires prior written approval from the Lab Coordinator.</p>',
-      category: '2',
       tags: ['start-date', 'timeline', 'joining'],
       slug: 'internship-start-date',
       status: 'published',
@@ -150,7 +148,6 @@ async function seedFAQs(adminUser, resolverUser) {
     {
       title: 'How do I access the ViBe platform for daily journaling?',
       body: '<p>The ViBe platform can be accessed at <code>vibe.iitrpr.ac.in</code> using your institute email credentials. Navigate to the <strong>Rosetta Journal</strong> section to log your daily activities. Entries must be submitted by <strong>9:00 PM daily</strong> and reviewed by your assigned mentor every week.</p>',
-      category: '12',
       tags: ['vibe', 'platform', 'journal', 'rosetta'],
       slug: 'vibe-platform-access',
       status: 'published',
@@ -159,7 +156,6 @@ async function seedFAQs(adminUser, resolverUser) {
     {
       title: 'What is the selection process for the internship?',
       body: '<p>The selection process consists of three stages: <ol><li>Application screening (GPA + statement of purpose)</li><li>Technical interview (online via Google Meet)</li><li>Final offer roll-out via email within 48 hours of the interview</li></ol>Shortlisted candidates are notified 1 week before the interview date.</p>',
-      category: '4',
       tags: ['selection', 'interview', 'process'],
       slug: 'selection-process',
       status: 'published',
@@ -168,7 +164,6 @@ async function seedFAQs(adminUser, resolverUser) {
     {
       title: 'How do I claim my internship completion certificate?',
       body: '<p>Upon successful completion of the internship (minimum 8 weeks, all journal entries submitted, NOC submitted), your certificate is auto-generated from the <strong>ViBe platform</strong> under the <em>Certificates</em> tab. Processing takes <strong>5–7 working days</strong> after your last day.</p>',
-      category: '8',
       tags: ['certificate', 'completion', 'internship'],
       slug: 'completion-certificate',
       status: 'published',
@@ -228,7 +223,6 @@ async function seedDiscussions(users) {
     {
       title: 'Can I delay my joining date by 2 weeks due to college exams?',
       body: '<p>My college end-semester exams are scheduled until the 15th of July. My offer letter says joining on 1st July. Is it possible to request a delayed joining? Will this affect my selection status?</p>',
-      category: '2',
       tags: ['joining', 'exams', 'delay'],
       author_id: users[2].user_id, // Priya
       spark_bounty: 20,
@@ -236,7 +230,6 @@ async function seedDiscussions(users) {
     {
       title: 'My NOC is signed by the Dean — will that be accepted?',
       body: '<p>My college doesn\'t have a designated principal at the moment. The Dean has signed my NOC. Is this acceptable or do I need to get it re-signed by an authorized principal?</p>',
-      category: '3',
       tags: ['noc', 'document', 'dean'],
       author_id: users[3].user_id, // Arjun
       spark_bounty: 0,
@@ -244,7 +237,6 @@ async function seedDiscussions(users) {
     {
       title: 'ViBe platform login not working — getting 403 error',
       body: '<p>I\'ve been trying to log into the ViBe platform since morning but I keep getting a 403 Forbidden error. I\'ve reset my password twice. Is there a known outage? My institute email is arjun.nair@student.iitrpr.ac.in</p>',
-      category: '11',
       tags: ['vibe', 'login', 'error', 'platform'],
       author_id: users[3].user_id, // Arjun
       spark_bounty: 10,
@@ -252,7 +244,6 @@ async function seedDiscussions(users) {
     {
       title: 'How should team formation be done for group projects?',
       body: '<p>Are teams formed by the coordinators or do we need to form our own teams? If we form our own, what is the maximum team size? Also, is cross-discipline teaming allowed?</p>',
-      category: '13',
       tags: ['team', 'project', 'team-formation'],
       author_id: users[4].user_id, // Sneha
       spark_bounty: 0,
@@ -260,7 +251,6 @@ async function seedDiscussions(users) {
     {
       title: 'Can I convert from part-time to full-time internship mid-way?',
       body: '<p>I initially selected part-time because of my coursework load. Now I realize I can manage full-time. Is it possible to convert mid-way? What is the process?</p>',
-      category: '5',
       tags: ['part-time', 'full-time', 'conversion'],
       author_id: users[2].user_id, // Priya
       spark_bounty: 15,

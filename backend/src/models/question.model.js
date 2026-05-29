@@ -68,7 +68,6 @@ const questionSchema = new mongoose.Schema(
       default: '',
     },
 
-    category: String,
     tags: [String],
 
     spark_bounty: {
@@ -178,12 +177,10 @@ const questionSchema = new mongoose.Schema(
   },
 )
 
-questionSchema.index({ category: 1, status: 1 })
 questionSchema.index({ tags: 1 })
 questionSchema.index({ created_at: -1 })
 questionSchema.index({ upvotes: -1 })
 questionSchema.index({ kind: 1, status: 1, last_activity_at: -1 })
-questionSchema.index({ kind: 1, category: 1, is_pinned: -1, created_at: -1 })
 
 // Text search index. body_plain has a lower weight than title/tags for ranking.
 questionSchema.index(

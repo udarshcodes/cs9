@@ -1,4 +1,5 @@
 import Answer from '../models/answer.model.js'
+import Comment from '../models/comment.model.js'
 import Notification from '../models/notification.model.js'
 import Question from '../models/question.model.js'
 import Role from '../models/role.model.js'
@@ -190,6 +191,64 @@ export async function updateUserStatus(req, res, next) {
     }
 
     res.json({ success: true, message: 'User status updated' })
+  } catch (error) {
+    next(error)
+  }
+}
+
+export async function getUserContributions(req, res, next) {
+  try {
+    const userId = req.params.userId
+    const limit = Math.min(parseInt(req.query.limit) || 10, 50)
+
+    const [questions, answers, comments] = await Promise.all([
+      Question.find({ author_id: userId })
+        .select('question_id title body status upvotes created_at')
+        .sort({ created_at: -1 })
+        .limit(limit)
+        .lean(),
+      Answer.find({ author_id: userId })
+        .select('answer_id question_id body score is_accepted created_at')
+        .sort({ created_at: -1 })
+        .limit(limit)
+        .lean(),
+      Comment.find({ author_id: userId })
+        .select('comment_id question_id answer_id body created_at')
+        .sort({ created_at: -1 })
+        .limit(limit)
+        .lean(),
+    ])
+
+    const contributions = [
+      ...questions.map(q => ({
+        type: 'question',
+        id: q.question_id,
+        title: q.title,
+        body: q.body,
+        status: q.status,
+        score: q.upvotes || 0,
+        time: q.created_at,
+      })),
+      ...answers.map(a => ({
+        type: 'answer',
+        id: a.answer_id,
+        questionId: a.question_id,
+        body: a.body,
+        score: a.score || 0,
+        isAccepted: a.is_accepted,
+        time: a.created_at,
+      })),
+      ...comments.map(c => ({
+        type: 'comment',
+        id: c.comment_id,
+        questionId: c.question_id,
+        answerId: c.answer_id,
+        body: c.body,
+        time: c.created_at,
+      })),
+    ].sort((a, b) => new Date(b.time) - new Date(a.time)).slice(0, limit)
+
+    res.json({ success: true, contributions })
   } catch (error) {
     next(error)
   }

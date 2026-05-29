@@ -9,7 +9,7 @@ function QueryDetailPage() {
     <div className="flex flex-1 flex-col p-8">
       <button
         type="button"
-        onClick={() => navigate('/user')}
+        onClick={() => navigate('/dashboard')}
         className="mb-6 flex items-center gap-2 text-[13px] font-medium text-[#444748] transition hover:text-black"
       >
         <X className="h-4 w-4" strokeWidth={1.8} /> Back

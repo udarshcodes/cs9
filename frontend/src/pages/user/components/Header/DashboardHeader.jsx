@@ -9,8 +9,8 @@ function DashboardHeader({
   notifications,
   unreadCount,
   isDark,
-  hasFilter,
-  onSearchOpen,
+
+  onSearchOpen,  // kept for future — modal lives in DashboardPage for now
   onRaiseQuery,
   onNotifOpen,
   onDarkToggle,
@@ -41,36 +41,29 @@ function DashboardHeader({
 
   return (
     <header
-      className="relative flex items-center justify-between border-b border-[#c4c7c7] bg-white pl-8 pr-[10%] py-4"
+      className="relative flex items-center justify-between border-b border-[#c4c7c7] bg-white px-8 py-4"
       onClick={closeAll}
     >
-      {/* Search trigger */}
+      {/* Search trigger — opens modal in DashboardPage */}
       <button
         type="button"
-        className={`flex w-90 items-center gap-2.5 rounded-lg border bg-[#f8f9fa] px-3 py-2 text-left transition hover:border-black ${
-          hasFilter ? 'border-[#8c6a40]' : 'border-[#c4c7c7]'
-        }`}
-        onClick={e => { e.stopPropagation(); onSearchOpen() }}
+        className="flex w-[420px] items-center gap-2 rounded-lg bg-[#edeeef] px-3 py-2 text-left text-[12px] text-[#747878] transition hover:text-[#191c1d]"
+        onClick={e => { e.stopPropagation(); onSearchOpen?.() }}
       >
-        <Search className="h-4 w-4 shrink-0 text-[#747878]" strokeWidth={1.8} />
-        <span className={`flex-1 text-[12px] ${hasFilter ? 'text-[#191c1d]' : 'text-[#747878]'}`}>
-          Search FAQs, categories, or status…
-        </span>
-        <div className="relative">
-          <SlidersHorizontal
-            className={`h-3.5 w-3.5 transition ${hasFilter ? 'text-[#8c6a40]' : 'text-[#c4c7c7]'}`}
-            strokeWidth={1.8}
-          />
-          {hasFilter && (
-            <span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-[#8c6a40]" />
-          )}
-        </div>
+        <Search className="h-4 w-4 shrink-0" strokeWidth={1.8} />
+        <span className="flex-1">Search FAQs, categories, or status…</span>
+        <SlidersHorizontal className="h-4 w-4 shrink-0 text-[#9ca3af]" strokeWidth={1.8} />
       </button>
 
-      <div className="relative flex items-center gap-4" onClick={e => e.stopPropagation()}>
+      {/* Right-side action group */}
+      <div className="flex items-center gap-6" onClick={e => e.stopPropagation()}>
         {currentView === 'dashboard' && (
-          <Button variant="secondary" className="gap-2 text-[11px]" onClick={onRaiseQuery}>
-            <PlusCircle className="h-3.5 w-3.5" strokeWidth={1.8} /> Raise Query
+          <Button
+            variant="secondary"
+            className="gap-2 rounded-lg border-transparent bg-[#8c6a40]/80 px-4 text-[11px] font-bold uppercase tracking-wide text-white hover:border-transparent hover:bg-[#7a5c35]"
+            onClick={onRaiseQuery}
+          >
+            <PlusCircle className="h-4 w-4" strokeWidth={1.8} /> Raise New Query
           </Button>
         )}
 
@@ -128,31 +121,28 @@ function DashboardHeader({
             : <Moon className="h-[18px] w-[18px]" strokeWidth={1.8} />}
         </button>
 
-      </div>
+        {/* Divider */}
+        <span className="h-8 w-px bg-[#c4c7c7]" />
 
-      {/* User menu — centred inside rightmost 10% lane */}
-      <div
-        className="absolute right-0 top-0 flex h-full w-[10%] items-center justify-center"
-        onClick={e => e.stopPropagation()}
-      >
+        {/* User menu */}
         <div className="relative">
           <button
             type="button"
-            className="flex items-center gap-2.5"
+            className="flex items-center gap-3"
             onClick={handleUserMenuClick}
           >
-            <div className="text-right">
-              <p className="text-[12px] font-semibold text-[#191c1d]">{user?.name || 'Student'}</p>
-              <p className="text-[10px] font-medium uppercase tracking-wide text-[#747878]">{user?.role || 'USER'}</p>
+            <div className="text-right leading-tight">
+              <p className="text-[13px] font-medium capitalize text-[#191c1d]">{user?.name || 'Student'}</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-[#747878]">{user?.role || 'USER'}</p>
             </div>
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#8c6a40] text-[12px] font-bold text-white">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#8c6a40] text-[12px] font-bold text-white">
               {initials}
             </div>
           </button>
 
           {showUserMenu && (
             <div
-              className="absolute right-0 top-11 z-50 min-w-[160px] overflow-hidden rounded-lg border border-[#c4c7c7] bg-white shadow-lg"
+              className="absolute right-0 top-12 z-50 min-w-[160px] overflow-hidden rounded-lg border border-[#c4c7c7] bg-white shadow-lg"
               onClick={e => e.stopPropagation()}
             >
               <button
@@ -160,7 +150,7 @@ function DashboardHeader({
                 className="flex w-full items-center gap-2 px-3 py-2 text-[11px] font-medium text-[#444748] transition hover:bg-[#f8f9fa]"
                 onClick={() => { onProfileSettings(); setShowUserMenu(false) }}
               >
-                <Settings className="h-3.5 w-3.5" strokeWidth={1.8} /> Profile Settings
+                <Settings className="h-3.5 w-3.5" strokeWidth={1.8} /> <span className="text-[13px] font-medium capitalize">Profile Settings</span>
               </button>
               <div className="h-px bg-[#c4c7c7]" />
               <button
@@ -168,7 +158,7 @@ function DashboardHeader({
                 className="flex w-full items-center gap-2 px-3 py-2 text-[11px] font-medium text-red-600 transition hover:bg-[#f8f9fa]"
                 onClick={onLogout}
               >
-                <LogOut className="h-3.5 w-3.5" strokeWidth={1.8} /> Logout
+                <LogOut className="h-3.5 w-3.5" strokeWidth={1.8} /> <span className="text-[13px] font-medium">Logout</span>
               </button>
             </div>
           )}

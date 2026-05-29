@@ -17,7 +17,7 @@ export const routes = [
     ),
   },
   {
-    path: '/user',
+    path: '/dashboard/*',
     element: (
       <ProtectedRoute>
         <UserHome />

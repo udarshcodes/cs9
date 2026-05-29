@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import {
   getUserById,
+  getUserContributions,
   listUsers,
   updateUserStatus,
 } from '../controllers/user.controller.js'
@@ -22,6 +23,7 @@ const router = Router()
  */
 router.get('/', verifyToken, checkRole('ADMIN'), listUsers)
 router.get('/:userId', verifyToken, getUserById)
+router.get('/:userId/contributions', verifyToken, getUserContributions)
 router.patch('/:userId/status', verifyToken, checkRole('ADMIN'), updateUserStatus)
 
 export default router

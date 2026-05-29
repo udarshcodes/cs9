@@ -1,4 +1,4 @@
-import { axiosPublic } from '../../api/axios'
+import { axiosPublic, axisPrivate } from '../../api/axios'
 
 const iconByTag = {
 	certificate: 'award',
@@ -83,4 +83,9 @@ function normalizeSections(payload) {
 export async function getFaqSections(signal) {
 	const response = await axiosPublic().get('/api/faqs', { signal })
 	return normalizeSections(response.data)
+}
+
+export async function getCurrentUser(signal) {
+	const { data } = await axisPrivate().get('/api/auth/me', { signal })
+	return data.user
 }

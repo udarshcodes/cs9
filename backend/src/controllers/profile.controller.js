@@ -1,6 +1,8 @@
+import argon2 from 'argon2'
 import UserProfile from '../models/user-profile.model.js'
 import User from '../models/user.model.js'
 import { createHttpError } from '../utils/http.js'
+import { validatePassword } from './auth.controller.js'
 
 function toProfile(user, profile) {
   return {
@@ -56,6 +58,38 @@ export async function updateMyProfile(req, res, next) {
     }
 
     res.json({ success: true, profile: toProfile(req.authUser, profile) })
+  } catch (error) {
+    next(error)
+  }
+}
+
+export async function changeMyPassword(req, res, next) {
+  try {
+    const currentPassword =
+      typeof req.body.currentPassword === 'string' ? req.body.currentPassword : ''
+    const newPassword =
+      typeof req.body.newPassword === 'string' ? req.body.newPassword : ''
+
+    if (!currentPassword || !newPassword) {
+      throw createHttpError(400, 'Current and new password are required')
+    }
+
+    const user = await User.findOne({ user_id: req.user.userId }).select('+passwordHash')
+
+    if (!user || !(await argon2.verify(user.passwordHash, currentPassword))) {
+      throw createHttpError(401, 'Current password is incorrect')
+    }
+
+    if (await argon2.verify(user.passwordHash, newPassword)) {
+      throw createHttpError(400, 'New password must be different from the current password')
+    }
+
+    validatePassword(newPassword)
+
+    user.passwordHash = await argon2.hash(newPassword)
+    await user.save()
+
+    res.json({ success: true, message: 'Password updated successfully' })
   } catch (error) {
     next(error)
   }

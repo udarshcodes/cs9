@@ -9,7 +9,7 @@ function RaiseQueryPage() {
       <div className="text-center">
         <h2 className="font-display mb-2 text-[18px] font-semibold text-[#191c1d]">Raise a Query</h2>
         <p className="mb-6 text-[13px] text-[#444748]">Query submission form — coming soon.</p>
-        <Button variant="secondary" onClick={() => navigate('/user')}>Back to Dashboard</Button>
+        <Button variant="secondary" onClick={() => navigate('/dashboard')}>Back to Dashboard</Button>
       </div>
     </div>
   )
