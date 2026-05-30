@@ -1,14 +1,5 @@
-import {
-  Menu,
-  MenuButton,
-  MenuItem,
-  MenuItems,
-  Popover,
-  PopoverButton,
-  PopoverPanel,
-} from '@headlessui/react'
-import { Bell, LogOut, Search, Settings, User } from 'lucide-react'
-import Button from '../../../../components/Button/Button'
+import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/react'
+import { Bell, LogOut, Moon, Search, Settings, Sun } from 'lucide-react'
 
 function AdminHeader({
   user,
@@ -16,14 +7,17 @@ function AdminHeader({
   searchQuery,
   notifications,
   unreadCount,
+  isDark,
   onSearchChange,
   onSearchSubmit,
   onNotificationsOpen,
+  onDarkToggle,
   onLanding,
   onLogout,
+  onProfileSettings,
 }) {
   return (
-    <header className="relative flex min-h-[72px] items-center justify-between border-b border-[#d9dadb] bg-white px-5 py-4 lg:px-8">
+    <header className="relative flex min-h-[72px] items-center justify-between border-b border-[#c4c7c7] bg-white px-5 py-4 lg:px-8">
       <form
         className="flex h-10 w-full max-w-[420px] items-center gap-2 rounded-lg bg-[#f3f4f6] px-3 text-[#747878] transition focus-within:ring-1 focus-within:ring-[#8c6a40]"
         onSubmit={onSearchSubmit}
@@ -39,16 +33,18 @@ function AdminHeader({
       </form>
 
       <div className="ml-4 flex items-center gap-4 lg:gap-6">
-        <Button
-          variant="secondary"
-          className="hidden min-h-9 px-4 text-[11px] font-bold uppercase tracking-wide sm:inline-flex"
+        <button
+          type="button"
+          className="hidden min-h-9 items-center gap-2 rounded-lg border border-[#8c6a40] bg-[#8c6a40] px-4 text-[11px] font-bold uppercase tracking-wide text-white hover:bg-[#7a5c35] hover:border-[#7a5c35] sm:inline-flex"
           onClick={onLanding}
         >
-          Landing
-        </Button>
+          FAQ View
+        </button>
 
-        <Popover className="relative">
-          <PopoverButton
+        {/* Notifications bell */}
+        <div className="relative">
+          <button
+            type="button"
             className="relative flex h-9 w-9 items-center justify-center rounded-lg text-[#444748] transition hover:bg-[#f3f4f6] hover:text-black focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2"
             onClick={() => onNotificationsOpen?.()}
           >
@@ -56,45 +52,27 @@ function AdminHeader({
             {unreadCount > 0 && (
               <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500" />
             )}
-          </PopoverButton>
+          </button>
+        </div>
 
-          <PopoverPanel className="absolute right-0 top-11 z-50 w-80 overflow-hidden rounded-lg border border-[#d9dadb] bg-white shadow-lg focus:outline-none">
-            <div className="flex items-center justify-between border-b border-[#e5e7eb] px-4 py-3">
-              <p className="text-[13px] font-semibold text-[#191c1d]">Notifications</p>
-              <span className="rounded-full bg-[#f3f4f6] px-2 py-0.5 text-[10px] font-bold text-[#747878]">
-                {unreadCount}
-              </span>
-            </div>
-            {notifications.length === 0 ? (
-              <p className="px-4 py-5 text-center text-[12px] text-[#747878]">
-                No notifications yet
-              </p>
-            ) : (
-              notifications.map((notification) => (
-                <div
-                  key={notification.notification_id || notification.id}
-                  className={`border-b border-[#f3f4f6] px-4 py-3 ${
-                    notification.is_read ? 'bg-white' : 'bg-[#f0f9ff]'
-                  }`}
-                >
-                  <p className="mb-1 text-[12px] font-semibold leading-snug text-[#191c1d]">
-                    {notification.title || 'Admin notification'}
-                  </p>
-                  <p className="text-[11px] leading-5 text-[#747878]">
-                    {notification.body || 'New platform activity is available.'}
-                  </p>
-                </div>
-              ))
-            )}
-          </PopoverPanel>
-        </Popover>
+        {/* Dark mode */}
+        <button
+          type="button"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-[#444748] transition hover:bg-[#f3f4f6] hover:text-black focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2"
+          onClick={() => onDarkToggle?.()}
+        >
+          {isDark
+            ? <Sun className="h-[18px] w-[18px]" strokeWidth={1.8} />
+            : <Moon className="h-[18px] w-[18px]" strokeWidth={1.8} />}
+        </button>
 
-        <span className="hidden h-8 w-px bg-[#d9dadb] sm:block" />
+        <span className="hidden h-8 w-px bg-[#c4c7c7] sm:block" />
 
+        {/* User menu */}
         <Menu as="div" className="relative">
           <MenuButton className="flex items-center gap-3 focus:outline-none">
-            <div className="hidden text-right leading-tight sm:block">
-              <p className="text-[13px] font-semibold capitalize text-[#191c1d]">
+            <div className="text-right leading-tight">
+              <p className="text-[13px] font-medium capitalize text-[#191c1d]">
                 {user?.name || 'Admin'}
               </p>
               <p className="text-[10px] font-semibold uppercase tracking-wide text-[#747878]">
@@ -106,35 +84,24 @@ function AdminHeader({
             </div>
           </MenuButton>
 
-          <MenuItems className="absolute right-0 top-12 z-50 min-w-[190px] overflow-hidden rounded-lg border border-[#d9dadb] bg-white shadow-lg focus:outline-none">
-            <div className="border-b border-[#e5e7eb] px-3 py-3">
-              <p className="text-[12px] font-semibold text-[#191c1d]">{user?.name || 'Admin'}</p>
-              <p className="mt-1 text-[10px] text-[#747878]">{user?.email || 'admin session'}</p>
-            </div>
+          <MenuItems className="absolute right-0 top-12 z-50 min-w-[160px] overflow-hidden rounded-lg border border-[#c4c7c7] bg-white shadow-lg focus:outline-none">
             <MenuItem>
               <button
                 type="button"
-                className="flex w-full items-center gap-2 px-3 py-2 text-[13px] font-medium text-[#444748] transition data-focus:bg-[#f8f9fa]"
+                className="flex w-full items-center gap-2 px-3 py-2 text-[11px] font-medium text-[#444748] transition data-focus:bg-[#f8f9fa]"
+                onClick={onProfileSettings}
               >
-                <User className="h-3.5 w-3.5" strokeWidth={1.8} /> Admin Profile
+                <Settings className="h-3.5 w-3.5" strokeWidth={1.8} /> <span className="text-[13px] font-medium capitalize">Profile Settings</span>
               </button>
             </MenuItem>
+            <div className="h-px bg-[#c4c7c7]" />
             <MenuItem>
               <button
                 type="button"
-                className="flex w-full items-center gap-2 px-3 py-2 text-[13px] font-medium text-[#444748] transition data-focus:bg-[#f8f9fa]"
-              >
-                <Settings className="h-3.5 w-3.5" strokeWidth={1.8} /> Settings
-              </button>
-            </MenuItem>
-            <div className="h-px bg-[#e5e7eb]" />
-            <MenuItem>
-              <button
-                type="button"
-                className="flex w-full items-center gap-2 px-3 py-2 text-[13px] font-medium text-red-600 transition data-focus:bg-[#f8f9fa]"
+                className="flex w-full items-center gap-2 px-3 py-2 text-[11px] font-medium text-red-600 transition data-focus:bg-[#f8f9fa]"
                 onClick={onLogout}
               >
-                <LogOut className="h-3.5 w-3.5" strokeWidth={1.8} /> Logout
+                <LogOut className="h-3.5 w-3.5" strokeWidth={1.8} /> <span className="text-[13px] font-medium">Logout</span>
               </button>
             </MenuItem>
           </MenuItems>

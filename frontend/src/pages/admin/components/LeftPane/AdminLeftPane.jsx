@@ -5,7 +5,6 @@ const navItems = [
   { id: 'queriesManagement', label: 'Queries', Icon: MessageSquare },
   { id: 'sparkLeaderboard', label: 'Spark', Icon: Zap },
   { id: 'faqManagement', label: 'FAQ', Icon: Settings },
-  { id: 'adminProfile', label: 'Profile', Icon: User },
 ]
 
 function AdminLeftPane({ currentView, onNavigate }) {

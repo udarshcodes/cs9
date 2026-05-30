@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useAuthStore from '../../store/useAuthStore'
 import AdminHeader from './components/Header/AdminHeader'
 import AdminLeftPane from './components/LeftPane/AdminLeftPane'
-import DashboardView from './pages/Dashboard'
 import FAQManagementView from './pages/FAQManagement'
 import QueriesManagementView from './pages/QueriesManagement'
 import SparkLeaderboardView from './pages/SparkLeaderboard'
@@ -15,6 +14,9 @@ import {
   markAllAdminNotificationsRead,
 } from './service'
 
+// Lazy-loaded so Recharts ships in a separate chunk, not the initial bundle.
+const DashboardView = lazy(() => import('./pages/Dashboard'))
+
 function AdminHome() {
   const navigate = useNavigate()
   const { user, clearUser } = useAuthStore()
@@ -24,6 +26,7 @@ function AdminHome() {
   const [notifications, setNotifications] = useState([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [searchQuery, setSearchQuery] = useState('')
+  const [isDark, setIsDark] = useState(false)
 
   const initials = user?.name
     ? user.name
@@ -113,6 +116,10 @@ function AdminHome() {
     }
   }
 
+  function handleProfileSettings() {
+    setCurrentAdminView('adminProfile')
+  }
+
   function handleSearchSubmit(event) {
     event.preventDefault()
     if (searchQuery.trim()) {
@@ -128,7 +135,11 @@ function AdminHome() {
   }
 
   return (
-    <div className="flex min-h-svh bg-[#f3f4f6] text-[#111827]">
+    <div
+      className={`flex min-h-svh bg-[#f3f4f6] text-[#111827] ${
+        isDark ? 'filter-[invert(1)_hue-rotate(180deg)]' : ''
+      }`}
+    >
       <AdminLeftPane currentView={currentAdminView} onNavigate={setCurrentAdminView} />
 
       <main className="flex min-w-0 flex-1 flex-col">
@@ -138,14 +149,23 @@ function AdminHome() {
           searchQuery={searchQuery}
           notifications={notifications}
           unreadCount={unreadCount}
+          isDark={isDark}
           onSearchChange={setSearchQuery}
           onSearchSubmit={handleSearchSubmit}
           onNotificationsOpen={handleNotificationsOpen}
+          onDarkToggle={() => setIsDark(v => !v)}
           onLanding={() => navigate('/')}
           onLogout={handleLogout}
+          onProfileSettings={handleProfileSettings}
         />
 
-        {currentAdminView === 'dashboard' && <DashboardView {...viewProps} />}
+        {currentAdminView === 'dashboard' && (
+          <Suspense
+            fallback={<div className="flex-1 p-8 text-[13px] text-[#747878]">Loading dashboard…</div>}
+          >
+            <DashboardView {...viewProps} />
+          </Suspense>
+        )}
         {currentAdminView === 'queriesManagement' && <QueriesManagementView {...viewProps} />}
         {currentAdminView === 'sparkLeaderboard' && <SparkLeaderboardView {...viewProps} />}
         {currentAdminView === 'faqManagement' && <FAQManagementView {...viewProps} />}

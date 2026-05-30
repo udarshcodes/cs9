@@ -11,15 +11,26 @@ import {
   TrendingUp,
   UserPlus,
 } from 'lucide-react'
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts'
 import Button from '../../../../components/Button/Button'
 
-const chartBars = [
-  { label: 'Academic', newClass: 'h-[66%]', resolvedClass: 'h-[42%]' },
-  { label: 'NOC', newClass: 'h-[48%]', resolvedClass: 'h-[72%]' },
-  { label: 'VIBE', newClass: 'h-[82%]', resolvedClass: 'h-[54%]' },
-  { label: 'Stipend', newClass: 'h-[40%]', resolvedClass: 'h-[62%]' },
-  { label: 'VIBE', newClass: 'h-[58%]', resolvedClass: 'h-[36%]' },
-  { label: 'Offer', newClass: 'h-[76%]', resolvedClass: 'h-[88%]' },
+// Placeholder until GET /api/admin/dashboard returns metrics.charts.categories.
+// Expected shape: [{ category: string, new: number, resolved: number }]
+const PLACEHOLDER_CATEGORIES = [
+  { category: 'Academic', new: 66, resolved: 42 },
+  { category: 'NOC', new: 48, resolved: 72 },
+  { category: 'VIBE', new: 82, resolved: 54 },
+  { category: 'Stipend', new: 40, resolved: 62 },
+  { category: 'Offer', new: 76, resolved: 88 },
+  { category: 'Other', new: 58, resolved: 36 },
 ]
 
 function formatNumber(value) {
@@ -90,6 +101,10 @@ function DashboardView({ dashboardData, isLoading, onRefresh }) {
   const recentQuestions = recent.questions || []
   const recentUsers = recent.users || []
   const recentFlags = recent.flags || []
+  // Real data once the backend aggregation exists; placeholder until then.
+  const categoryData = dashboardData?.charts?.categories?.length
+    ? dashboardData.charts.categories
+    : PLACEHOLDER_CATEGORIES
   const attentionRows = recentFlags.slice(0, 5)
   const activityItems = [
     ...recentQuestions.slice(0, 2).map((question) => ({
@@ -188,20 +203,37 @@ function DashboardView({ dashboardData, isLoading, onRefresh }) {
               </span>
             </div>
           </div>
-          <div className="grid min-h-[240px] grid-cols-6 items-end gap-4 border-b border-[#e5e7eb] pb-4">
-            {chartBars.map((bar) => (
-              <div key={bar.label} className="flex h-52 items-end justify-center gap-1.5">
-                <div className={`w-5 rounded-t bg-blue-600 ${bar.newClass}`} />
-                <div className={`w-5 rounded-t bg-[#d1d5db] ${bar.resolvedClass}`} />
-              </div>
-            ))}
-          </div>
-          <div className="grid grid-cols-6 gap-4 pt-4 text-center text-[9px] font-bold uppercase tracking-wide text-[#6b7280]">
-            {chartBars.map((bar) => (
-              <span key={bar.label} className="truncate">
-                {bar.label}
-              </span>
-            ))}
+          <div className="h-[260px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={categoryData}
+                margin={{ top: 8, right: 8, left: -16, bottom: 0 }}
+                barGap={4}
+                barCategoryGap="24%"
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
+                <XAxis
+                  dataKey="category"
+                  tick={{ fontSize: 9, fontWeight: 700, fill: '#6b7280' }}
+                  tickLine={false}
+                  axisLine={{ stroke: '#e5e7eb' }}
+                />
+                <YAxis
+                  tick={{ fontSize: 10, fill: '#9ca3af' }}
+                  tickLine={false}
+                  axisLine={false}
+                  width={36}
+                  allowDecimals={false}
+                />
+                <Tooltip
+                  cursor={{ fill: '#f9fafb' }}
+                  contentStyle={{ borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12 }}
+                  labelStyle={{ fontWeight: 700, color: '#111827' }}
+                />
+                <Bar dataKey="new" name="New" fill="#2563eb" radius={[4, 4, 0, 0]} maxBarSize={20} />
+                <Bar dataKey="resolved" name="Resolved" fill="#d1d5db" radius={[4, 4, 0, 0]} maxBarSize={20} />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </section>
 

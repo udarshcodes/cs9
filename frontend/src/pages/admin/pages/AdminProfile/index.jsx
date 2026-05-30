@@ -1,16 +1,18 @@
 import { useEffect, useState } from 'react'
 import { Camera, Save, Lock, Mail, User, Shield, Loader } from 'lucide-react'
 import { fetchProfile, updateProfile, changePassword } from '../../../user/service'
+import useAuthStore from '../../../../store/useAuthStore'
+import { notifySuccess, notifyError } from '../../../../lib/notify'
 import Button from '../../../../components/Button/Button'
 
 function AdminProfileView({ user }) {
+  const setUser = useAuthStore(s => s.setUser)
+
   const [name, setName] = useState(user?.name || '')
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
 
   useEffect(() => {
     fetchProfile()
@@ -21,21 +23,21 @@ function AdminProfileView({ user }) {
 
   async function handleSave() {
     if (!name.trim()) {
-      setError('Name cannot be empty.')
+      notifyError('Name cannot be empty.')
       return
     }
     const wantsPasswordChange = currentPassword || newPassword
     if (wantsPasswordChange && (!currentPassword || !newPassword)) {
-      setError('Enter both current and new password.')
+      notifyError('Enter both your current and new password.')
       return
     }
 
     setSaving(true)
-    setError('')
-    setSuccess('')
-
     try {
       await updateProfile({ displayName: name.trim() })
+      const fresh = await fetchProfile()
+      const current = useAuthStore.getState().user
+      setUser({ ...current, name: fresh.displayName || current?.name || name })
 
       if (wantsPasswordChange) {
         await changePassword(currentPassword, newPassword)
@@ -43,13 +45,13 @@ function AdminProfileView({ user }) {
         setNewPassword('')
       }
 
-      setSuccess(
+      notifySuccess(
         wantsPasswordChange
           ? 'Profile and password updated successfully.'
           : 'Profile updated successfully.',
       )
     } catch (err) {
-      setError(err.response?.data?.message || 'Could not update profile.')
+      notifyError(err.response?.data?.message || 'Could not update profile.')
     } finally {
       setSaving(false)
     }
@@ -92,7 +94,7 @@ function AdminProfileView({ user }) {
                   <button
                     type="button"
                     title="Upload new photo"
-                    onClick={() => setError('Photo upload is not supported.')}
+                    onClick={() => notifyError('Photo upload is not supported.')}
                     className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-[#191c1d] text-white transition hover:scale-110 hover:bg-[#8c6a40]"
                   >
                     <Camera className="h-3.5 w-3.5" strokeWidth={1.8} />
@@ -105,18 +107,6 @@ function AdminProfileView({ user }) {
                   </p>
                 </div>
               </div>
-
-              {/* Alerts */}
-              {error && (
-                <div className="mb-5 rounded-lg border border-[#fee2e2] bg-[#fef2f2] px-4 py-3 text-[13px] text-[#dc2626]">
-                  {error}
-                </div>
-              )}
-              {success && (
-                <div className="mb-5 rounded-lg border border-[#bbf7d0] bg-[#f0fdf4] px-4 py-3 text-[13px] text-[#16a34a]">
-                  {success}
-                </div>
-              )}
 
               {/* Name + email */}
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
@@ -202,8 +192,6 @@ function AdminProfileView({ user }) {
                     setName(user?.name || '')
                     setCurrentPassword('')
                     setNewPassword('')
-                    setError('')
-                    setSuccess('')
                   }}
                 >
                   Discard
