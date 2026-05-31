@@ -317,7 +317,8 @@ export async function getQuestionById(req, res, next) {
       if (admin || state === 'visible') {
         return { ...base, moderation_state: 'visible' }
       }
-      return { ...base, moderation_state: state, body: '', body_plain: '' }
+      const { body_plain: _, ...docWithoutPlain } = base
+      return { ...docWithoutPlain, moderation_state: state, body: '' }
     }
 
     // Current user's vote on each answer (for highlight / deselect)
