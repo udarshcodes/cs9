@@ -155,6 +155,7 @@ function AdminHome() {
         <AdminHeader
           user={user}
           initials={initials}
+          currentAdminView={currentAdminView}
           searchQuery={searchQuery}
           notifications={notifications}
           unreadCount={unreadCount}
