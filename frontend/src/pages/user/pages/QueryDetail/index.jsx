@@ -9,7 +9,7 @@ import AnswerComments from '../../components/AnswerComments/AnswerComments'
 import Button from '../../../../components/Button/Button'
 import {
   fetchQuestionDetail, fetchQuestions, postAnswer, voteAnswer, reportContent, postComment,
-  resolveQuestion, acceptAnswer,
+  resolveQuestion, acceptAnswer, recordQuestionView,
 } from '../../service'
 import { notifySuccess, notifyError } from '../../../../lib/notify'
 
@@ -45,7 +45,9 @@ function QueryDetailPage() {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      setData(await fetchQuestionDetail(queryId))
+      const result = await fetchQuestionDetail(queryId)
+      setData(result)
+      recordQuestionView(queryId)
     } catch {
       setData(null)
     } finally {

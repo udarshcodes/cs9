@@ -110,6 +110,11 @@ export async function fetchQuestionDetail(questionId) {
   return data // { question, answers, comments }
 }
 
+export async function recordQuestionView(questionId) {
+  // Fire-and-forget — view tracking must never block or break the page load.
+  axisPrivate().post(`/api/questions/${questionId}/view`).catch(() => {})
+}
+
 export async function postAnswer(questionId, body) {
   const { data } = await axisPrivate().post(`/api/questions/${questionId}/answers`, { body })
   return data

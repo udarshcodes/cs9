@@ -9,6 +9,7 @@ import {
   listPublishedFAQs,
   listQuestions,
   listQuestionTags,
+  recordQuestionView,
   resolveQuestion,
   updateQuestion,
   voteQuestion,
@@ -180,6 +181,28 @@ router.get('/counts', checkRole('USER', 'RESOLVER', 'ADMIN'), getQuestionCounts)
  *         description: Question not found
  */
 router.get('/:questionId', checkRole('USER', 'RESOLVER', 'ADMIN'), getQuestionById)
+
+/**
+ * @openapi
+ * /api/questions/{questionId}/view:
+ *   post:
+ *     summary: Record a question view (once per user, author excluded)
+ *     tags: [Questions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: questionId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: View recorded or already exists
+ *       404:
+ *         description: Question not found
+ */
+router.post('/:questionId/view', checkRole('USER', 'RESOLVER', 'ADMIN'), recordQuestionView)
 
 /**
  * @openapi

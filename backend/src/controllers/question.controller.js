@@ -2,6 +2,7 @@ import Answer from '../models/answer.model.js'
 import Comment from '../models/comment.model.js'
 import Notification from '../models/notification.model.js'
 import Question from '../models/question.model.js'
+import { QuestionView } from '../models/question_view.model.js'
 import User from '../models/user.model.js'
 import UserProfile from '../models/user-profile.model.js'
 import Vote from '../models/vote.model.js'
@@ -322,11 +323,6 @@ export async function getQuestionById(req, res, next) {
       throw createHttpError(404, 'Question not found')
     }
 
-    await Question.updateOne(
-      { question_id: question.question_id },
-      { $inc: { view_count: 1 } },
-    )
-
     const includeAnswers = req.query.includeAnswers !== 'false'
     const includeComments = req.query.includeComments !== 'false'
 
@@ -388,6 +384,40 @@ export async function getQuestionById(req, res, next) {
       answers: answers.map((a) => ({ ...decorate(a), my_vote: voteByAnswer[a.answer_id] || 0 })),
       comments: comments.map(decorate),
     })
+  } catch (error) {
+    next(error)
+  }
+}
+
+export async function recordQuestionView(req, res, next) {
+  try {
+    const { questionId } = req.params
+    const { userId } = req.user
+
+    // Don't count the author's own views
+    const question = await Question.findOne({ question_id: questionId })
+    if (!question) {
+      throw createHttpError(404, 'Question not found')
+    }
+    if (question.author_id === userId) {
+      return res.json({ success: true, viewed: false, reason: 'author' })
+    }
+
+    // Upsert — only inserts if (question_id, user_id) pair doesn't exist.
+    // Second+ views are a no-op on this collection.
+    await QuestionView.findOneAndUpdate(
+      { question_id: questionId, user_id: userId },
+      { $setOnInsert: { viewed_at: new Date() } },
+      { upsert: true },
+    )
+
+    // Increment cached count only when this was a genuinely new view
+    await Question.updateOne(
+      { question_id: questionId },
+      { $inc: { view_count: 1 } },
+    )
+
+    res.json({ success: true, viewed: true })
   } catch (error) {
     next(error)
   }
