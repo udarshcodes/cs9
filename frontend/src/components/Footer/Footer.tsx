@@ -73,6 +73,9 @@ function Footer() {
           <p>
             Powered by Vicharanashala Lab for Education Design (VLED), Indian Institute of Technology Ropar.
           </p>
+          <p>
+              This software was developed by VINS Interns using Vicharanashala Lab's resources during the internship period.
+          </p>
         </div>
       </div>
     </footer>
