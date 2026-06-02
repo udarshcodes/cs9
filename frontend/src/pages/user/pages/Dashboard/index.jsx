@@ -127,7 +127,7 @@ function DashboardPage() {
   const filtered = queries
 
   return (
-    <div className="flex gap-10 p-8">
+    <div className="flex flex-col gap-10 p-8 lg:flex-row">
       {/* ── Left column ────────────────────────────────────────────── */}
       <div className="min-w-0 flex-1">
         {sidebarNav === 'My Queries' && (

@@ -61,17 +61,17 @@ function DashboardHeader({
   const activeCount = localTags.length
 
   return (
-    <header className="sticky top-0 z-40 flex items-center justify-between border-b border-border bg-[#f8f9fa] px-8 py-4 dark:bg-bg-card">
+    <header className="sticky top-0 z-40 flex flex-col gap-3 border-b border-border bg-[#f8f9fa] px-8 py-4 dark:bg-bg-card md:flex-row md:items-center md:justify-between">
 
       <div className="min-w-0 flex-1">
         {showSearch && (
-          <div className="relative flex w-[420px] items-center gap-2 rounded-lg bg-bg-tertiary px-3 py-2 transition hover:bg-bg-tertiary">
+          <div className="relative flex min-w-0 w-full max-w-[420px] items-center gap-2 rounded-lg bg-bg-tertiary px-3 py-2 transition hover:bg-bg-tertiary">
             <Search className="h-4 w-4 shrink-0 text-text-muted" strokeWidth={1.8} />
 
             <input
               type="text"
               placeholder="Search FAQs, categories, or status…"
-              className="flex-1 bg-transparent text-[12px] text-text-primary placeholder-[#747878] outline-none"
+              className="flex-1 min-w-0 bg-transparent text-[12px] text-text-primary placeholder-[#747878] outline-none"
               onChange={e => onSearchOpen?.(e.target.value)}
               onFocus={() => onSearchOpen?.('')}
             />
@@ -158,7 +158,7 @@ function DashboardHeader({
       </div>
 
       {/* Right-side action group */}
-      <div className="flex items-center gap-6">
+      <div className="flex flex-wrap items-center gap-3">
         {showRaiseQuery && (
           <Button
             variant="secondary"
