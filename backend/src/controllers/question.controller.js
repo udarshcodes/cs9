@@ -134,6 +134,50 @@ export function getQuestionStatusFilter(status) {
   return status || undefined
 }
 
+/**
+ * Builds the shared question query filter — kind, tag, keyword search (incl.
+ * answer bodies), the `my=1` ownership scope, and the non-admin moderation gate.
+ * Callers layer on their own status / pagination / soft-delete handling. Shared
+ * by listQuestions and getQuestionCounts so the two can never drift apart.
+ */
+export async function buildQuestionBaseFilter(req) {
+  const filter = {}
+
+  if (req.query.kind) {
+    filter.kind = req.query.kind
+  }
+
+  if (req.query.tag) {
+    // Selected categories filter over tags (comma-separated → match any)
+    const tags = String(req.query.tag).split(',').map((t) => t.trim()).filter(Boolean)
+    if (tags.length) {
+      filter.tags = tags.length > 1 ? { $in: tags } : tags[0]
+    }
+  }
+
+  if (req.query.search) {
+    // Keyword search over question text (title/body) and answer text
+    const search = new RegExp(escapeRegex(String(req.query.search)), 'i')
+    const answerQuestionIds = await Answer.find({ body: search }).distinct('question_id')
+    filter.$or = [
+      { title: search },
+      { body: search },
+      { question_id: { $in: answerQuestionIds } },
+    ]
+  }
+
+  // Support ?my=1 to fetch only the current user's questions
+  if (req.query.my === '1') {
+    filter.author_id = req.user.userId
+  }
+
+  if (!isAdmin(req)) {
+    filter.moderation_status = 'approved'
+  }
+
+  return filter
+}
+
 export async function createQuestion(req, res, next) {
   let question
 
@@ -177,32 +221,11 @@ export async function createQuestion(req, res, next) {
 export async function listQuestions(req, res, next) {
   try {
     const { page, limit, skip } = getPagination(req.query)
-    const filter = {}
+    const filter = await buildQuestionBaseFilter(req)
 
-    if (req.query.kind) {
-      filter.kind = req.query.kind
-    }
-
-    if (req.query.tag) {
-      // Selected categories filter over tags (comma-separated → match any)
-      const tags = String(req.query.tag).split(',').map((t) => t.trim()).filter(Boolean)
-      if (tags.length) {
-        filter.tags = tags.length > 1 ? { $in: tags } : tags[0]
-      }
-    }
     const statusFilter = getQuestionStatusFilter(req.query.status)
     if (statusFilter) {
       filter.status = statusFilter
-    }
-    if (req.query.search) {
-      // Keyword search over question text (title/body) and answer text
-      const search = new RegExp(escapeRegex(String(req.query.search)), 'i')
-      const answerQuestionIds = await Answer.find({ body: search }).distinct('question_id')
-      filter.$or = [
-        { title: search },
-        { body: search },
-        { question_id: { $in: answerQuestionIds } },
-      ]
     }
     if (req.query.createdAfter) {
       const since = new Date(req.query.createdAfter)
@@ -211,17 +234,13 @@ export async function listQuestions(req, res, next) {
       }
     }
 
-    // Support ?my=1 to fetch only the current user's questions
-    if (req.query.my === '1') {
-      filter.author_id = req.user.userId
-    }
-
     if (req.query.id) {
       filter.question_id = req.query.id
     }
 
     if (!isAdmin(req)) {
-      filter.moderation_status = 'approved'
+      // moderation_status is applied in buildQuestionBaseFilter; resolve the
+      // soft-delete visibility against whatever status filter is in effect.
       if (filter.status === 'removed') {
         filter.status = { $exists: false }
       } else if (!filter.status) {
@@ -581,42 +600,15 @@ export async function voteQuestion(req, res, next) {
 
 export async function getQuestionCounts(req, res, next) {
   try {
-    const filter = {}
-
-    if (req.query.kind) {
-      filter.kind = req.query.kind
-    }
-
-    if (req.query.tag) {
-      // Selected categories filter over tags (comma-separated → match any)
-      const tags = String(req.query.tag).split(',').map((t) => t.trim()).filter(Boolean)
-      if (tags.length) {
-        filter.tags = tags.length > 1 ? { $in: tags } : tags[0]
-      }
-    }
-
-    if (req.query.search) {
-      // Keyword search over question text (title/body) and answer text
-      const search = new RegExp(escapeRegex(String(req.query.search)), 'i')
-      const answerQuestionIds = await Answer.find({ body: search }).distinct('question_id')
-      filter.$or = [
-        { title: search },
-        { body: search },
-        { question_id: { $in: answerQuestionIds } },
-      ]
-    }
-
-    // Support ?my=1 to fetch only the current user's questions
-    if (req.query.my === '1') {
-      filter.author_id = req.user.userId
-    }
+    const filter = await buildQuestionBaseFilter(req)
 
     if (!isAdmin(req)) {
-      filter.moderation_status = 'approved'
       filter.status = { $ne: 'removed' }
     }
 
-    // Parallel count operations for each tab
+    // Each tab layers its own status / recency constraint over the shared base.
+    // Status routes through getQuestionStatusFilter so these counts stay in lock
+    // step with the list endpoint's filtering ('resolved' → 'closed', etc.).
     const [allCount, trendingCount, recentCount, unansweredCount, resolvedCount] = await Promise.all([
       // All Queries
       Question.countDocuments({ ...filter }),
@@ -627,10 +619,10 @@ export async function getQuestionCounts(req, res, next) {
         ...filter,
         created_at: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
       }),
-      // Unanswered (status = unanswered)
-      Question.countDocuments({ ...filter, status: 'unanswered' }),
-      // Resolved (status = closed)
-      Question.countDocuments({ ...filter, status: 'closed' }),
+      // Unanswered
+      Question.countDocuments({ ...filter, status: getQuestionStatusFilter('unanswered') }),
+      // Resolved
+      Question.countDocuments({ ...filter, status: getQuestionStatusFilter('resolved') }),
     ])
 
     res.json({
