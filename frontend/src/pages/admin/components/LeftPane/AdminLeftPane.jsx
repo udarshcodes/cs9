@@ -15,13 +15,13 @@ function AdminLeftPane({ currentView, onNavigate }) {
   const activeView = currentView === 'queryDetail' ? 'queriesManagement' : currentView
 
   return (
-    <aside className="sticky top-0 h-svh overflow-y-auto hidden w-64 shrink-0 flex-col border-r border-border bg-[#f8f9fa] pt-6 md:flex dark:bg-bg-tertiary">
+    <aside className="sticky top-0 h-svh overflow-y-auto hidden w-64 shrink-0 flex-col border-r border-border bg-bg-secondary pt-6 md:flex dark:bg-bg-tertiary">
       <button
         type="button"
         className="flex flex-col px-6 pb-6 text-left transition hover:opacity-80"
         onClick={() => onNavigate('dashboard')}
       >
-        <h2 className="font-display text-[18px] font-bold leading-tight text-[#0f172a]">
+        <h2 className="font-display text-[18px] font-bold leading-tight text-text-primary">
           {__PROJECT_NAME__ || 'Vicharanashala'}
         </h2>
         <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
@@ -47,8 +47,8 @@ function AdminLeftPane({ currentView, onNavigate }) {
               onClick={() => onNavigate(id)}
               aria-current={isActive ? 'page' : undefined}
               className={`flex min-h-10 w-full items-center gap-3 rounded-r-lg px-3 py-2 text-left text-[14px] transition ${isActive
-                  ? 'border-r-2 border-brand bg-brand/10 font-semibold text-brand'
-                  : 'text-text-secondary hover:bg-brand/10 hover:text-brand'
+                  ? 'border-r-2 border-brand bg-brand/10 font-semibold text-brand dark:bg-brand/10'
+                  : 'text-text-secondary hover:bg-brand/10 hover:text-brand dark:hover:bg-brand/10 dark:hover:text-brand'
                 }`}
             >
               <Icon className="h-4 w-4 shrink-0" strokeWidth={1.8} />
