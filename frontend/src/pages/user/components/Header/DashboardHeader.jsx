@@ -1,9 +1,10 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Popover, PopoverButton, PopoverPanel,
   Menu, MenuButton, MenuItems, MenuItem,
 } from '@headlessui/react'
-import { Settings, Search, SlidersHorizontal, PlusCircle, Bell, LogOut, Moon, Sun, Tag, HelpCircle } from 'lucide-react'
+import { Settings, Search, SlidersHorizontal, PlusCircle, Bell, LogOut, Moon, Sun, Tag, HelpCircle, ExternalLink } from 'lucide-react'
 import { timeAgo } from '../../service'
 import Button from '../../../../components/Button/Button'
 
@@ -44,7 +45,17 @@ function DashboardHeader({
   selectedTags = [],
   onTagsChange,
 }) {
+  const navigate = useNavigate()
   const [localTags, setLocalTags] = useState(selectedTags)
+
+  function handleNotifClick(n) {
+    if (!n.link) return
+    if (n.link.startsWith('http')) {
+      window.open(n.link, '_blank', 'noopener,noreferrer')
+    } else {
+      navigate(n.link)
+    }
+  }
 
   function toggleTag(tag) {
     const next = localTags.includes(tag)
@@ -90,16 +101,16 @@ function DashboardHeader({
                 )}
               </PopoverButton>
 
-              <div className="absolute right-0 top-full z-50 w-[240px]">
+              <div className="absolute right-0 top-full z-50 w-[340px]">
                 <PopoverPanel className="mt-2 overflow-hidden rounded-xl border border-border-light bg-bg-card/60 shadow-xl backdrop-blur-sm focus:outline-none">
                   {/* Header row */}
-                  <div className="flex items-center justify-between border-b border-border-light px-3 py-2">
+                  <div className="flex items-center justify-between border-b border-border-light px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-text-muted">
+                      <span className="text-[12px] font-bold uppercase tracking-widest text-text-muted">
                         Categories
                       </span>
                       {activeCount > 0 && (
-                        <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-brand/12 text-[9px] font-semibold text-brand">
+                        <span className="flex h-4 w-4 items-center justify-center rounded-full bg-brand/12 text-[10px] font-semibold text-brand">
                           {activeCount}
                         </span>
                       )}
@@ -108,7 +119,7 @@ function DashboardHeader({
                       <button
                         type="button"
                         onClick={clearAll}
-                        className="text-[10px] font-medium text-brand underline-offset-2 transition hover:underline"
+                        className="text-[11px] font-medium text-brand underline-offset-2 transition hover:underline"
                       >
                         Clear
                       </button>
@@ -116,9 +127,9 @@ function DashboardHeader({
                   </div>
 
                   {/* Tag list */}
-                  <div className="flex flex-wrap gap-1.5 p-2.5">
+                  <div className="flex flex-wrap gap-2 p-3">
                     {tags.length === 0 ? (
-                      <p className="py-2 text-[11px] text-text-muted">No categories yet.</p>
+                      <p className="py-2 text-[12px] text-text-muted">No categories yet.</p>
                     ) : (
                       tags.map(({ tag, count }) => {
                         const { color, bg } = styleForTag(tag)
@@ -128,21 +139,21 @@ function DashboardHeader({
                             key={tag}
                             type="button"
                             onClick={() => toggleTag(tag)}
-                            className={`flex items-center gap-1 rounded-lg border px-2 py-1 text-left font-medium transition hover:-translate-y-0.5 hover:shadow-sm ${
+                            className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-left font-medium transition hover:-translate-y-0.5 hover:shadow-sm ${
                               isSelected
                                 ? 'border-brand bg-brand/5 text-brand'
                                 : 'border-border-light text-text-secondary hover:border-brand hover:text-brand'
                             }`}
                           >
                             <span
-                              className="flex h-4 w-4 items-center justify-center rounded"
+                              className="flex h-5 w-5 items-center justify-center rounded"
                               style={{ background: bg }}
                             >
-                              <Tag className="h-2.5 w-2.5" strokeWidth={2} style={{ color }} />
+                              <Tag className="h-3 w-3" strokeWidth={2} style={{ color }} />
                             </span>
-                            <span className="!text-[10px] leading-none">{tag}</span>
+                            <span className="!text-[11px] leading-none">{tag}</span>
                             {count != null && (
-                              <span className={`!text-[8px] leading-none ${isSelected ? 'text-brand/70' : 'text-text-muted'}`}>
+                              <span className={`!text-[9px] leading-none ${isSelected ? 'text-brand/70' : 'text-text-muted'}`}>
                                 {count}
                               </span>
                             )}
@@ -176,7 +187,7 @@ function DashboardHeader({
         <Popover className="relative">
           <PopoverButton
             onClick={() => onNotifOpen?.()}
-            className="relative p-1 text-text-secondary transition hover:text-text-primary focus:outline-none"
+            className="relative p-1 text-text-secondary transition duration-200 hover:text-text-primary hover:bg-bg-tertiary rounded-lg focus:outline-none"
           >
             <Bell className="h-[18px] w-[18px]" strokeWidth={1.8} />
             {unreadCount > 0 && (
@@ -184,29 +195,45 @@ function DashboardHeader({
             )}
           </PopoverButton>
 
-          <PopoverPanel className="absolute right-0 top-9 z-50 w-80 overflow-hidden rounded-lg border border-border bg-bg-card shadow-lg focus:outline-none">
+          <PopoverPanel className="absolute right-0 top-9 z-50 max-h-[500px] w-80 overflow-hidden rounded-lg border border-border bg-bg-card shadow-lg focus:outline-none sm:w-96 max-sm:w-[calc(100vw-32px)] max-sm:left-4">
             <p className="border-b border-border px-4 py-3 text-[13px] font-semibold text-text-primary">
               Notifications
             </p>
             {notifications.length === 0 ? (
               <p className="px-4 py-5 text-center text-[12px] text-text-muted">No notifications yet</p>
             ) : (
-              notifications.slice(0, 3).map(n => (
-                <div
-                  key={n.notification_id || n.id}
-                  className={`border-b border-border-light px-4 py-3 ${n.is_read ? 'bg-bg-card' : 'bg-info/10'}`}
-                >
-                  <p className="mb-1 text-[12px] leading-snug text-text-secondary">{n.body || n.title}</p>
-                  <span className="text-[10px] font-medium text-text-muted">
-                    {n.created_at ? timeAgo(n.created_at) : ''}
-                  </span>
-                </div>
-              ))
+              <div className="flex flex-col max-h-[420px] overflow-y-auto">
+                {notifications.slice(0, 3).map(n => (
+                  <div
+                    key={n.notification_id || n.id}
+                    onClick={() => n.link && handleNotifClick(n)}
+                    className={`border-b border-border-light px-4 py-3 transition duration-200 ${
+                      n.link ? 'cursor-pointer hover:bg-bg-tertiary hover:shadow-sm hover:translate-x-0.5' : ''
+                    } ${n.is_read ? 'bg-bg-card' : 'bg-info/10'}`}
+                  >
+                    <p className={`text-[12px] leading-snug ${
+                      !n.is_read ? 'font-medium text-text-primary' : 'text-text-secondary'
+                    }`}>
+                      {n.body || n.title}
+                    </p>
+                    <div className="mt-2 flex items-center gap-2">
+                      <span className="text-[10px] font-medium text-text-muted">
+                        {n.created_at ? timeAgo(n.created_at) : ''}
+                      </span>
+                      {n.link && (
+                        <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-brand">
+                          View <ExternalLink className="h-2.5 w-2.5" />
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
             <button
               type="button"
               onClick={onNotifViewAll}
-              className="w-full cursor-pointer bg-bg-tertiary py-2.5 text-center text-[11px] font-semibold text-brand transition hover:bg-bg-tertiary"
+              className="w-full cursor-pointer bg-bg-tertiary py-2.5 text-center text-[11px] font-semibold text-brand transition duration-200 hover:bg-bg-secondary"
             >
               View All
             </button>
@@ -216,7 +243,7 @@ function DashboardHeader({
         {/* Dark mode toggle */}
         <button
           type="button"
-          className="p-1 text-text-secondary transition hover:text-text-primary"
+          className="p-1 text-text-secondary transition duration-200 hover:text-text-primary hover:bg-bg-tertiary rounded-lg"
           onClick={() => onDarkToggle()}
         >
           {isDark
@@ -229,7 +256,7 @@ function DashboardHeader({
 
         {/* User menu */}
         <Menu as="div" className="relative">
-          <MenuButton className="flex items-center gap-3 focus:outline-none">
+          <MenuButton className="flex items-center gap-3 focus:outline-none rounded-lg px-2 py-1 transition duration-200 hover:bg-bg-tertiary hover:ring-1 hover:ring-brand/30">
             <div className="text-right leading-tight">
               <p className="text-[13px] font-medium capitalize text-text-primary">{user?.name || 'Student'}</p>
               <p className="text-[10px] font-semibold uppercase tracking-wide text-text-muted">{user?.role || 'USER'}</p>
