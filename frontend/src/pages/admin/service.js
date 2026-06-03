@@ -121,9 +121,10 @@ export async function deleteTag(tagName) {
 
 // ─── Queries management ──────────────────────────────────────────────────────
 
-export async function fetchAdminQuestions({ page = 1, limit = 10, search = '' } = {}) {
+export async function fetchAdminQuestions({ page = 1, limit = 10, search = '', tag = '' } = {}) {
   const params = new URLSearchParams({ page, limit, sort: 'latest' })
   if (search.trim()) params.set('search', search.trim())
+  if (tag.trim()) params.set('tag', tag.trim())
   // Admins receive every question (all kinds/statuses) — see listQuestions.
   const { data } = await axisPrivate().get(`/api/questions?${params}`)
   return {

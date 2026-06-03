@@ -3,7 +3,7 @@ import {
   MessageSquare, ChevronUp, Zap, Tag, Pin, Lock, CheckCircle,
   Clock, User, ChevronLeft, ChevronRight, Loader, VenetianMask,
 } from 'lucide-react'
-import { fetchAdminQuestions } from '../../service'
+import { fetchAdminQuestions, fetchTags } from '../../service'
 
 const PAGE_SIZE = 10
 
@@ -39,24 +39,29 @@ function formatDate(value) {
 }
 
 function QueriesManagementView({ searchQuery = '', onOpenQuery }) {
-  const [items, setItems]         = useState([])
+  const [items, setItems] = useState([])
   const [pagination, setPagination] = useState({ page: 1, pages: 0, total: 0 })
-  const [loading, setLoading]     = useState(true)
-  const [page, setPage]           = useState(1)
+  const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
   const [debouncedSearch, setDebouncedSearch] = useState(searchQuery)
+  const [tags, setTags] = useState([])
+  const [selectedTags, setSelectedTags] = useState([])
 
   // Debounce header search; reset to page 1 whenever the term changes.
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(searchQuery), 300)
     return () => clearTimeout(t)
   }, [searchQuery])
-  useEffect(() => { setPage(1) }, [debouncedSearch])
+  useEffect(() => { setPage(1) }, [debouncedSearch, selectedTags])
 
   const load = useCallback(async () => {
     setLoading(true)
     try {
       const { questions, pagination: meta } = await fetchAdminQuestions({
-        page, limit: PAGE_SIZE, search: debouncedSearch,
+        page,
+        limit: PAGE_SIZE,
+        search: debouncedSearch,
+        tag: selectedTags.join(','),
       })
       setItems(questions)
       setPagination(meta)
@@ -66,7 +71,29 @@ function QueriesManagementView({ searchQuery = '', onOpenQuery }) {
     } finally {
       setLoading(false)
     }
-  }, [page, debouncedSearch])
+  }, [page, debouncedSearch, selectedTags])
+
+  function toggleTag(tag) {
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((item) => item !== tag) : [...prev, tag],
+    )
+  }
+
+  function clearSelectedTags() {
+    setSelectedTags([])
+  }
+
+  useEffect(() => {
+    async function loadTags() {
+      try {
+        const result = await fetchTags()
+        setTags(result || [])
+      } catch {
+        setTags([])
+      }
+    }
+    loadTags()
+  }, [])
 
   useEffect(() => { load() }, [load])
 
@@ -88,6 +115,43 @@ function QueriesManagementView({ searchQuery = '', onOpenQuery }) {
         </span>
       </div>
 
+      <div className="mb-6 rounded-2xl border border-border-light bg-bg-card p-4 text-[13px] text-text-secondary shadow-sm">
+        <div className="mb-3 flex flex-wrap items-center gap-3">
+          <span className="text-[11px] font-semibold uppercase tracking-widest text-text-muted">Filter by tags</span>
+          {selectedTags.length > 0 && (
+            <button
+              type="button"
+              onClick={clearSelectedTags}
+              className="text-[11px] font-medium text-brand underline-offset-2 transition hover:underline"
+            >
+              Clear selected
+            </button>
+          )}
+        </div>
+
+        {tags.length === 0 ? (
+          <p className="text-[12px] text-text-muted">No tags available to filter yet.</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {tags.map((tag) => {
+              const tagValue = tag.name || ''
+              const tagLabel = tag.displayName || tagValue
+              const isSelected = selectedTags.includes(tagValue)
+              return (
+                <button
+                  key={tagValue}
+                  type="button"
+                  onClick={() => toggleTag(tagValue)}
+                  className={`rounded-full border px-3 py-1 text-[12px] font-semibold transition ${isSelected ? 'border-brand bg-brand/10 text-brand' : 'border-border-light bg-transparent text-text-secondary hover:border-brand hover:text-brand'}`}
+                >
+                  {tagLabel}
+                </button>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
       {loading ? (
         <div className="flex items-center justify-center gap-2 py-16 text-[13px] text-text-muted">
           <Loader className="h-4 w-4 animate-spin" /> Loading queries…
@@ -95,7 +159,14 @@ function QueriesManagementView({ searchQuery = '', onOpenQuery }) {
       ) : items.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-2 py-16 text-[13px] text-text-muted">
           <MessageSquare className="h-8 w-8 text-[#d1d5db]" strokeWidth={1.5} />
-          {debouncedSearch.trim() ? `No queries match “${debouncedSearch.trim()}”.` : 'No queries yet.'}
+          {debouncedSearch.trim() || selectedTags.length > 0 ? (
+            <span>
+              No queries match{debouncedSearch.trim() ? ` “${debouncedSearch.trim()}”` : ''}
+              {selectedTags.length > 0 ? ` in ${selectedTags.join(', ')}` : ''}.
+            </span>
+          ) : (
+            'No queries yet.'
+          )}
         </div>
       ) : (
         <>
