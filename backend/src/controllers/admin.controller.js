@@ -663,6 +663,11 @@ export async function adminCommentAndResolve(req, res, next) {
       throw createHttpError(404, 'Question not found')
     }
 
+    // Prevent admins from using privileged resolve on their own question
+    if (question.author_id === req.user.userId) {
+      throw createHttpError(403, 'Admins cannot resolve their own question through this action')
+    }
+
     const answer = await Answer.create({
       question_id: question.question_id,
       author_id: req.user.userId,
