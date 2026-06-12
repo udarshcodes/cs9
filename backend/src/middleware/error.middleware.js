@@ -1,12 +1,13 @@
 export function notFound(req, _res, next) {
-  console.warn(`[404] ${req.method} ${req.originalUrl}`)
+  console.warn('[404] %s %s', req.method, req.originalUrl)
   const error = new Error('Route not found')
   error.statusCode = 404
   next(error)
 }
 
 export function errorHandler(error, _req, res, _next) {
-  console.error(`[error] ${error.message}`, error.stack ?? '')
+  console.error('[error] %s', error.message)
+  console.error(error.stack ?? '')
   let statusCode = error.statusCode || error.status || 500
   let message = error.message || 'Internal server error'
 

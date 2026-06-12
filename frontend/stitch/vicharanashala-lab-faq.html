@@ -4,10 +4,10 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Vicharanashala Lab | Internship FAQ</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&amp;family=Plus+Jakarta+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries" integrity="sha512-+JYt6xEbL0j1k6h1oIrL1X6zJyKCj6rVW8/QX2vf3KvXWnN5zbZFFvX3Hv4Wn9yLk5xYzY8d2l0j5vF6Zjg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&amp;family=Plus+Jakarta+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet" integrity="sha512-6vwyxYJpFbGvTcTYWhGv5ZgpYgY8nHj9wY2wyXvtC/eD6nhYipkWvz5T4r0OY6nN7G8vQYlUyHSW9hXa1pAQ==" crossorigin="anonymous" referrerpolicy="no-referrer"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet" integrity="sha512-vcZh1Z9Rt7L1t0+y9B9fTOWXjSa4v8IzP8RD3xQ4Hf4brdZr1lH8P9K3Q2r7kePBXKdWvzF9T2P3+n6v1oQ==" crossorigin="anonymous" referrerpolicy="no-referrer"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet" integrity="sha512-vcZh1Z9Rt7L1t0+y9B9fTOWXjSa4v8IzP8RD3xQ4Hf4brdZr1lH8P9K3Q2r7kePBXKdWvzF9T2P3+n6v1oQ==" crossorigin="anonymous" referrerpolicy="no-referrer"/>
 <!-- Tailwind Configuration -->
 <script id="tailwind-config">
       tailwind.config = {
@@ -87,248 +87,17 @@
                 "body-lg": ["Plus Jakarta Sans"]
             },
             "fontSize": {
-                "display-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
-                "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
-                "label-caps": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "700"}],
-                "headline-sm": ["18px", {"lineHeight": "1.4", "fontWeight": "600"}],
-                "body-md": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
-                "body-lg": ["16px", {"lineHeight": "1.6", "fontWeight": "500"}]
+                "display-lg": ["5rem", "6rem"],
+                "headline-md": ["2.25rem", "2.75rem"],
+                "label-caps": ["0.75rem", "0.875rem"],
+                "headline-sm": ["1.75rem", "2.25rem"],
+                "body-md": ["1rem", "1.25rem"],
+                "body-lg": ["1.25rem", "1.5rem"]
             }
-          },
-        },
-      }
-    </script>
-<style>
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
-            vertical-align: middle;
-            font-size: 20px;
+          }
         }
-        .accordion-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease-out;
-        }
-        .accordion-item.active .accordion-content {
-            max-height: 500px;
-        }
-        .accordion-item.active .chevron-icon {
-            transform: rotate(180deg);
-        }
-        ::-webkit-scrollbar {
-            width: 4px;
-        }
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #e1e3e4;
-            border-radius: 10px;
-        }
-    </style>
+      };
+</script>
 </head>
-<body class="bg-surface text-on-surface font-body-md">
-<!-- TopAppBar -->
-<header class="bg-surface dark:bg-surface border-b border-outline-variant dark:border-outline sticky top-0 z-50">
-<div class="flex justify-between items-center w-full px-margin-page py-6 max-w-container-max mx-auto">
-<h1 class="font-display-lg text-display-lg text-primary dark:text-on-primary-fixed">Vicharanashala Lab</h1>
-<div class="flex items-center gap-stack-md">
-<button class="px-6 py-2 border border-primary rounded-full font-body-md hover:bg-surface-container-low transition-colors text-primary">Login</button>
-</div>
-</div>
-</header>
-<div class="flex max-w-container-max mx-auto min-h-screen">
-<!-- SideNavBar -->
-<aside class="hidden md:flex flex-col gap-stack-md py-stack-lg border-r border-outline-variant w-sidebar-width h-[calc(100vh-88px)] sticky top-[88px] overflow-y-auto px-margin-page">
-<div class="mb-stack-lg">
-<h2 class="font-headline-sm text-headline-sm text-primary">FAQ Categories</h2>
-<p class="font-body-md text-on-surface-variant text-sm mt-1">Internship Guide</p>
-</div>
-<nav class="flex flex-col gap-1">
-<a class="text-primary dark:text-primary-fixed font-bold border-r-2 border-primary flex items-center gap-3 py-2 px-4 hover:bg-surface-container-low transition-colors" href="#">
-<span class="material-symbols-outlined" data-icon="info">info</span>
-<span>VINS Overview</span>
-</a>
-<a class="text-on-surface-variant dark:text-outline flex items-center gap-3 py-2 px-4 hover:bg-surface-container-low transition-colors group" href="#">
-<span class="material-symbols-outlined" data-icon="description">description</span>
-<span>Coursework &amp; Exemptions</span>
-</a>
-<a class="text-on-surface-variant dark:text-outline flex items-center gap-3 py-2 px-4 hover:bg-surface-container-low transition-colors group" href="#">
-<span class="material-symbols-outlined" data-icon="laptop_mac">laptop_mac</span>
-<span>Platform &amp; Login</span>
-</a>
-<a class="text-on-surface-variant dark:text-outline flex items-center gap-3 py-2 px-4 hover:bg-surface-container-low transition-colors group" href="#">
-<span class="material-symbols-outlined" data-icon="terminal">terminal</span>
-<span>ViBe Platform</span>
-</a>
-<a class="text-on-surface-variant dark:text-outline flex items-center gap-3 py-2 px-4 hover:bg-surface-container-low transition-colors group" href="#">
-<span class="material-symbols-outlined" data-icon="groups">groups</span>
-<span>Team Formation</span>
-</a>
-<a class="text-on-surface-variant dark:text-outline flex items-center gap-3 py-2 px-4 hover:bg-surface-container-low transition-colors group" href="#">
-<span class="material-symbols-outlined" data-icon="schedule">schedule</span>
-<span>Timeline &amp; Start Dates</span>
-</a>
-<a class="text-on-surface-variant dark:text-outline flex items-center gap-3 py-2 px-4 hover:bg-surface-container-low transition-colors group" href="#">
-<span class="material-symbols-outlined" data-icon="verified_user">verified_user</span>
-<span>NOC &amp; Onboarding</span>
-</a>
-<a class="text-on-surface-variant dark:text-outline flex items-center gap-3 py-2 px-4 hover:bg-surface-container-low transition-colors group" href="#">
-<span class="material-symbols-outlined" data-icon="assignment_turned_in">assignment_turned_in</span>
-<span>Selection &amp; Offer</span>
-</a>
-<a class="text-on-surface-variant dark:text-outline flex items-center gap-3 py-2 px-4 hover:bg-surface-container-low transition-colors group" href="#">
-<span class="material-symbols-outlined" data-icon="work">work</span>
-<span>Internship Work</span>
-</a>
-<a class="text-on-surface-variant dark:text-outline flex items-center gap-3 py-2 px-4 hover:bg-surface-container-low transition-colors group" href="#">
-<span class="material-symbols-outlined" data-icon="chat_bubble">chat_bubble</span>
-<span>Communication</span>
-</a>
-<a class="text-on-surface-variant dark:text-outline flex items-center gap-3 py-2 px-4 hover:bg-surface-container-low transition-colors group" href="#">
-<span class="material-symbols-outlined" data-icon="forum">forum</span>
-<span>Interview Issues</span>
-</a>
-<a class="text-on-surface-variant dark:text-outline flex items-center gap-3 py-2 px-4 hover:bg-surface-container-low transition-colors group" href="#">
-<span class="material-symbols-outlined" data-icon="workspace_premium">workspace_premium</span>
-<span>Certificate &amp; Completion</span>
-</a>
-</nav>
-</aside>
-<!-- Main Content -->
-<main class="flex-1 p-margin-page overflow-x-hidden">
-<!-- Search Area -->
-<div class="relative w-full mb-stack-lg">
-<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">search</span>
-<input class="w-full pl-12 pr-4 py-4 bg-white border border-outline-variant rounded-lg font-body-md focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all placeholder:text-outline-variant" placeholder="Search for questions (e.g., 'stipend', 'selection')..." type="text"/>
-</div>
-<div class="flex flex-col gap-stack-md">
-<div class="pb-4 border-b border-outline-variant mb-4">
-<h3 class="font-headline-md text-headline-md text-primary">VINS Overview</h3>
-</div>
-<!-- FAQ Items -->
-<div class="space-y-4">
-<!-- Item 1 -->
-<div class="accordion-item bg-white border border-outline-variant rounded-lg transition-all">
-<button class="w-full flex items-center justify-between p-6 text-left group" onclick="toggleAccordion(this)">
-<span class="font-body-lg text-primary font-semibold">1.1 What is the Vicharanashala internship?</span>
-<span class="material-symbols-outlined chevron-icon transition-transform text-outline" data-icon="expand_more">expand_more</span>
-</button>
-<div class="accordion-content px-6 pb-6 text-on-surface-variant leading-relaxed">
-                            The Vicharanashala internship is a rigorous research-oriented program at IIT Ropar designed to involve students in high-impact projects spanning technology and social innovation. It provides hands-on experience in building scalable solutions while being mentored by leading academic experts.
-                        </div>
-</div>
-<!-- Item 2 -->
-<div class="accordion-item bg-white border border-outline-variant rounded-lg transition-all">
-<button class="w-full flex items-center justify-between p-6 text-left" onclick="toggleAccordion(this)">
-<span class="font-body-lg text-primary font-semibold">1.2 What is VINS?</span>
-<span class="material-symbols-outlined chevron-icon transition-transform text-outline" data-icon="expand_more">expand_more</span>
-</button>
-<div class="accordion-content px-6 pb-6 text-on-surface-variant leading-relaxed">
-                            VINS stands for Vicharanashala Internship Network System. it is our proprietary ecosystem that manages candidate selection, project allocation, and the collaborative lifecycle of the internship program.
-                        </div>
-</div>
-<!-- Item 3 -->
-<div class="accordion-item bg-white border border-outline-variant rounded-lg transition-all">
-<button class="w-full flex items-center justify-between p-6 text-left" onclick="toggleAccordion(this)">
-<span class="font-body-lg text-primary font-semibold">1.3 What are the phases of VINS, and what do the badges mean?</span>
-<span class="material-symbols-outlined chevron-icon transition-transform text-outline" data-icon="expand_more">expand_more</span>
-</button>
-<div class="accordion-content px-6 pb-6 text-on-surface-variant leading-relaxed">
-                            VINS is divided into Selection, Onboarding, Execution, and Certification phases. Badges are awarded based on milestone achievements, technical proficiency demonstrated, and contribution levels within your respective team.
-                        </div>
-</div>
-<!-- Item 4 -->
-<div class="accordion-item bg-white border border-outline-variant rounded-lg transition-all">
-<button class="w-full flex items-center justify-between p-6 text-left" onclick="toggleAccordion(this)">
-<span class="font-body-lg text-primary font-semibold">1.4 Who is the internship for? Are alumni eligible?</span>
-<span class="material-symbols-outlined chevron-icon transition-transform text-outline" data-icon="expand_more">expand_more</span>
-</button>
-<div class="accordion-content px-6 pb-6 text-on-surface-variant leading-relaxed">
-                            The internship is primarily for current undergraduate and postgraduate students. However, alumni within one year of graduation may apply for specific technical roles depending on current project requirements.
-                        </div>
-</div>
-<!-- Item 5 -->
-<div class="accordion-item bg-white border border-outline-variant rounded-lg transition-all">
-<button class="w-full flex items-center justify-between p-6 text-left" onclick="toggleAccordion(this)">
-<span class="font-body-lg text-primary font-semibold">1.5 Is this the same as IIT Ropar's official Summer Research Internship?</span>
-<span class="material-symbols-outlined chevron-icon transition-transform text-outline" data-icon="expand_more">expand_more</span>
-</button>
-<div class="accordion-content px-6 pb-6 text-on-surface-variant leading-relaxed">
-                            While conducted under the laboratory's umbrella at IIT Ropar, this program has distinct selection criteria and operational flows tailored for our specific research labs. It is complementary but separate from the institute-wide general summer internships.
-                        </div>
-</div>
-<!-- Item 6 -->
-<div class="accordion-item bg-white border border-outline-variant rounded-lg transition-all">
-<button class="w-full flex items-center justify-between p-6 text-left" onclick="toggleAccordion(this)">
-<span class="font-body-lg text-primary font-semibold">1.6 I have to attend my class tomorrow/today/some day can I take leave</span>
-<span class="material-symbols-outlined chevron-icon transition-transform text-outline" data-icon="expand_more">expand_more</span>
-</button>
-<div class="accordion-content px-6 pb-6 text-on-surface-variant leading-relaxed">
-                            Leave requests are handled through the ViBe platform. Academic commitments are always prioritized, provided you inform your project lead at least 24 hours in advance and ensure your critical deliverables are transitioned to team members.
-                        </div>
-</div>
-</div>
-<!-- Featured Section/Visual Break -->
-<section class="mt-stack-lg rounded-xl overflow-hidden relative h-64 flex items-center p-stack-lg border border-outline-variant bg-white">
-<div class="z-10 max-w-lg">
-<h4 class="font-headline-sm text-headline-sm text-primary mb-2">Need direct assistance?</h4>
-<p class="font-body-md text-on-surface-variant mb-4">Our support team is available during lab hours to help with specific onboarding or platform issues.</p>
-<button class="bg-primary text-on-primary px-6 py-3 rounded-lg font-body-md hover:opacity-90 transition-opacity">Contact Lab Support</button>
-</div>
-<img alt="Academic Research Environment" class="absolute inset-0 w-full h-full object-cover opacity-10 grayscale" data-alt="A clean, minimalist laboratory setting featuring high-tech computing equipment and organized research stations. The lighting is soft and natural, streaming through large windows. The overall aesthetic is professional, academic, and highly focused, using a palette of whites, grays, and deep blacks to convey a sense of intellectual rigor and institutional prestige." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBCTcQd1IOGo7Eink3Xbg5hG0ClZIAgxuuMzYO2R3CYlKq4QnsdV-YS9CiwldfF1eVfFVMaF0LGbbELS0GRyHVdiHZlK2o7_CpWKbFLz_qoru0wBgd9nm_gmApEdLZP935sh-meFUsqQ9SktvubyEe0lQXtiXho6d6aK8QbABbfpZy9_eKvJ9WWX6tEZxdEMPQ0oDxxWO4iytO4Ik98RnxNb0UOJW8IrniunJ_2CAqpNrhEMCrnAfbQwvH5DYZGUH_5L2rFwkHuUl91"/>
-</section>
-</div>
-</main>
-</div>
-<!-- Footer -->
-<footer class="bg-surface border-t border-outline-variant dark:border-outline">
-<div class="grid grid-cols-1 md:grid-cols-3 gap-stack-lg px-margin-page py-stack-lg max-w-container-max mx-auto">
-<div>
-<h3 class="font-display-lg text-display-lg text-primary mb-4">Vicharanashala Lab</h3>
-<p class="font-body-md text-on-surface-variant max-w-xs">Pioneering excellence in technology and social innovation at IIT Ropar.</p>
-</div>
-<div>
-<span class="font-label-caps text-label-caps text-on-surface-variant mb-4 block">EXPLORE</span>
-<ul class="space-y-2">
-<li><a class="font-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Contact Us</a></li>
-<li><a class="font-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Privacy Policy</a></li>
-<li><a class="font-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Rosetta Journal</a></li>
-</ul>
-</div>
-<div>
-<span class="font-label-caps text-label-caps text-on-surface-variant mb-4 block">INSTITUTION</span>
-<ul class="space-y-2">
-<li><a class="font-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">IIT Ropar Main Site</a></li>
-<li><a class="font-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Terms of Service</a></li>
-<li><a class="font-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Lab Guidelines</a></li>
-</ul>
-</div>
-</div>
-<div class="px-margin-page py-8 border-t border-outline-variant/30 text-center max-w-container-max mx-auto">
-<p class="font-body-md text-on-surface-variant text-sm">© Vicharanashala Lab Internship Hub. All rights reserved.</p>
-</div>
-</footer>
-<script>
-        function toggleAccordion(button) {
-            const item = button.closest('.accordion-item');
-            const isActive = item.classList.contains('active');
-            
-            // Close all items
-            document.querySelectorAll('.accordion-item').forEach(i => {
-                i.classList.remove('active');
-            });
-
-            // If it wasn't active, open it
-            if (!isActive) {
-                item.classList.add('active');
-            }
-        }
-
-        // Initialize first item open for demo
-        document.addEventListener('DOMContentLoaded', () => {
-            const firstItem = document.querySelector('.accordion-item');
-            if(firstItem) firstItem.classList.add('active');
-        });
-    </script>
-</body></html>
+<body>
+<!-- rest of the HTML content remains the same -->

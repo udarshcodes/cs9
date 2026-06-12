@@ -1,27 +1,30 @@
 import { ChevronDown } from 'lucide-react'
 import { parseMarkdown } from '../../../lib/markdown'
+import DOMPurify from 'dompurify';
 
 function getQuestionLabel(faq) {
   const rawQuestion = faq.question || ''
   return rawQuestion.replace(/^\s*\d+(?:\.\d+)*\s*/, '').trim()
 }
 
+const hardcodedRegex = /\b(hello|world)/gi;
+
 function highlightText(text, search) {
   if (!search || !search.trim()) return text
-  const cleanSearch = search.trim().replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')
-  const useWordBoundary = cleanSearch.length < 3 && /^\w/.test(cleanSearch)
-  const regexStr = useWordBoundary ? `\\b(${cleanSearch})` : `(${cleanSearch})`
+  const cleanSearch = search.trim()
+  const validRegex = /^[\w\s]+$/.test(cleanSearch);
+  if (!validRegex) return text;
+  const regexStr = `\\b(${cleanSearch})`
   const regex = new RegExp(regexStr, 'gi')
   return text.replace(regex, '<span class="text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-950/20 px-0.5 rounded font-semibold">$1</span>')
 }
 
 function highlightHtml(html, search) {
   if (!search || !search.trim()) return html
-  const cleanSearch = search.trim().replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')
-  const useWordBoundary = cleanSearch.length < 3 && /^\w/.test(cleanSearch)
-  const regexStr = useWordBoundary
-    ? `(<[^>]*>)|\\b(${cleanSearch})`
-    : `(<[^>]*>)|(${cleanSearch})`
+  const cleanSearch = search.trim()
+  const validRegex = /^[\w\s]+$/.test(cleanSearch);
+  if (!validRegex) return html;
+  const regexStr = `(<[^>]*>)|\\b(${cleanSearch})`
   const regex = new RegExp(regexStr, 'gi')
   return html.replace(regex, (match, tag, term) => {
     if (tag) return tag
@@ -31,6 +34,9 @@ function highlightHtml(html, search) {
 
 function FaqCard({ faq, sectionId, isOpen, onToggle, searchQuery = '' }) {
   const answerId = `faq-answer-${sectionId}-${faq.id}`
+
+  const sanitizedQuestion = DOMPurify.sanitize(highlightText(getQuestionLabel(faq), searchQuery))
+  const sanitizedAnswer = DOMPurify.sanitize(highlightHtml(parseMarkdown(faq.answer || ''), searchQuery))
 
   return (
     <article className="overflow-hidden rounded-lg border border-border bg-bg-card transition">
@@ -43,7 +49,7 @@ function FaqCard({ faq, sectionId, isOpen, onToggle, searchQuery = '' }) {
       >
         <span
           className="text-[14px] font-semibold leading-relaxed text-text-primary"
-          dangerouslySetInnerHTML={{ __html: highlightText(getQuestionLabel(faq), searchQuery) }}
+          dangerouslySetInnerHTML={{ __html: sanitizedQuestion }}
         />
         <ChevronDown
           aria-hidden="true"
@@ -60,7 +66,7 @@ function FaqCard({ faq, sectionId, isOpen, onToggle, searchQuery = '' }) {
         <div className="overflow-hidden">
           <div
             className="markdown-body px-4 pb-4 text-[13px] leading-6 text-text-secondary [&_a]:text-brand [&_a]:underline"
-            dangerouslySetInnerHTML={{ __html: highlightHtml(parseMarkdown(faq.answer || ''), searchQuery) }}
+            dangerouslySetInnerHTML={{ __html: sanitizedAnswer }}
           />
         </div>
       </div>

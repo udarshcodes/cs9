@@ -1,6 +1,7 @@
 import type { FC } from 'react'
 import { ChevronUp, MessageCircle, Reply, CheckCircle, Clock } from 'lucide-react'
 import { STATUS_CONFIG } from '../../constants'
+import DOMPurify from 'dompurify'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -40,6 +41,10 @@ const QuestionCard: FC<QuestionCardProps> = ({ query, onUpvote, onClick }) => {
     : query.status === 'In Progress' ? Clock
     : CheckCircle
 
+  const sanitizedMeta = DOMPurify.sanitize(query.meta)
+  const sanitizedTitle = DOMPurify.sanitize(query.title)
+  const sanitizedDesc = DOMPurify.sanitize(query.desc)
+
   return (
     <div
       className="mb-4 flex cursor-pointer rounded-xl border border-border bg-bg-card p-5 transition hover:border-brand hover:shadow-sm"
@@ -78,12 +83,12 @@ const QuestionCard: FC<QuestionCardProps> = ({ query, onUpvote, onClick }) => {
             ))}
           </div>
           <span className="shrink-0 text-[12px] font-medium text-text-muted">
-            <span className="text-text-primary">{query.authorName}</span> · {query.meta}
+            <span className="text-text-primary">{query.authorName}</span> · {sanitizedMeta}
           </span>
         </div>
 
-        <h3 className="font-display mb-2 text-[18px] font-semibold text-text-primary break-words">{query.title}</h3>
-        <p className="mb-4 text-[13px] leading-6 text-text-secondary break-words" dangerouslySetInnerHTML={{ __html: query.desc }} />
+        <h3 className="font-display mb-2 text-[18px] font-semibold text-text-primary break-words">{sanitizedTitle}</h3>
+        <p className="mb-4 text-[13px] leading-6 text-text-secondary break-words" dangerouslySetInnerHTML={{ __html: sanitizedDesc }} />
 
         <div className="flex items-center gap-5 text-[12px] font-medium text-text-secondary">
           {/* Total replies (answer_count) */}

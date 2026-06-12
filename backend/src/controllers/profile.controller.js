@@ -40,9 +40,9 @@ export async function updateMyProfile(req, res, next) {
       socialLinks: 'social_links',
     }
 
-    for (const [input, stored] of Object.entries(fields)) {
+    for (const input in fields) {
       if (req.body[input] !== undefined) {
-        updates[stored] = req.body[input]
+        updates[fields[input]] = req.body[input]
       }
     }
 
@@ -102,11 +102,16 @@ export async function getPublicProfile(req, res, next) {
     }
 
     const value = toProfile(user, profile)
-    delete value.sparkBalance
-    delete value.location
-    delete value.socialLinks
+    const publicProfile = {
+      userId: value.userId,
+      displayName: value.displayName,
+      bio: value.bio,
+      avatarUrl: value.avatarUrl,
+      expertise: value.expertise,
+      reputation: value.reputation,
+    }
 
-    res.json({ success: true, profile: value })
+    res.json({ success: true, profile: publicProfile })
   } catch (error) {
     next(error)
   }

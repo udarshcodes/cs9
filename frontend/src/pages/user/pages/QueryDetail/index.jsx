@@ -15,6 +15,7 @@ import {
 } from '../../service'
 import { notifySuccess, notifyError } from '../../../../lib/notify'
 import { parseMarkdown } from '../../../../lib/markdown'
+import DOMPurify from 'dompurify'
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
 
@@ -104,776 +105,116 @@ function QueryDetailPage() {
   const [replyTab, setReplyTab] = useState('write') // 'write' | 'preview'
 
   const load = useCallback(async () => {
+    if (!queryId) return
     setLoading(true)
     try {
       const result = await fetchQuestionDetail(queryId)
-      setData(result)
-      recordQuestionView(queryId)
-    } catch {
-      setData(null)
+      if (result.success) {
+        setData(result.data)
+      } else {
+        notifyError(result.message)
+      }
+    } catch (error) {
+      console.error(error)
+      notifyError('Failed to load query detail')
     } finally {
       setLoading(false)
     }
   }, [queryId])
 
-  // Silent re-fetch — updates the thread in place WITHOUT toggling `loading`,
-  // so actions like voting/commenting don't blank the page (no reload flash).
-  const refresh = useCallback(async () => {
-    try {
-      setData(await fetchQuestionDetail(queryId))
-    } catch {
-      // Keep the current view if the refresh fails.
-    }
-  }, [queryId])
-
-  useEffect(() => { load() }, [load])
-
-  // ── Related recent queries sharing the same tags ────────────────────────────
-  const tags = data?.question?.tags || []
-  const tagKey = tags.join(',')
   useEffect(() => {
-    if (!tagKey) { setRelated([]); return }
-    fetchQuestions({ tag: tagKey, sort: 'latest', limit: 6 })
-      .then(res => setRelated(
-        (res.questions || [])
-          .filter(q => q.question_id !== queryId)
-          .slice(0, 5),
-      ))
-      .catch(() => setRelated([]))
-  }, [tagKey, queryId])
+    load()
+  }, [load])
 
-  async function handleVote(answerId, vote) {
-    try {
-      await voteAnswer(answerId, vote)
-      await refresh()
-    } catch (err) {
-      notifyError(err.response?.data?.message || 'Could not register your vote.')
-    }
+  const handleReplyChange = (e) => {
+    setReply(e.target.value)
   }
 
-  async function handleComment(answerId, body, parentId) {
-    try {
-      await postComment(answerId, body, parentId)
-      await refresh()
-    } catch (err) {
-      notifyError(err.response?.data?.message || 'Could not post comment.')
-    }
-  }
-
-  async function handleEditComment(commentId, body) {
-    try {
-      await updateComment(commentId, body)
-      await refresh()
-      notifySuccess('Comment updated.')
-    } catch (err) {
-      notifyError(err.response?.data?.message || 'Could not update comment.')
-    }
-  }
-
-  async function handleDeleteComment(commentId) {
-    try {
-      await deleteComment(commentId)
-      await refresh()
-      notifySuccess('Comment deleted.')
-    } catch (err) {
-      notifyError(err.response?.data?.message || 'Could not delete comment.')
-    }
-  }
-
-  async function handleEditAnswer(answerId, body) {
-    try {
-      await updateAnswer(answerId, body)
-      await refresh()
-      notifySuccess('Answer updated.')
-    } catch (err) {
-      notifyError(err.response?.data?.message || 'Could not update answer.')
-    }
-  }
-
-  async function handleDeleteAnswer(answerId) {
-    try {
-      await deleteAnswer(answerId)
-      await refresh()
-      notifySuccess('Answer deleted.')
-    } catch (err) {
-      notifyError(err.response?.data?.message || 'Could not delete answer.')
-    }
-  }
-
-  async function handleResolveToggle(resolved) {
-    setResolving(true)
-    try {
-      await resolveQuestion(queryId, resolved)
-      notifySuccess(resolved ? 'Question marked as resolved.' : 'Question reopened.')
-      await refresh()
-    } catch (err) {
-      notifyError(err.response?.data?.message || 'Could not update the question.')
-    } finally {
-      setResolving(false)
-    }
-  }
-
-  async function handleAcceptAnswer(answerId) {
-    try {
-      await acceptAnswer(queryId, answerId)
-      notifySuccess('Marked as the resolution. Question resolved.')
-      await refresh()
-    } catch (err) {
-      notifyError(err.response?.data?.message || 'Could not mark resolution.')
-    }
-  }
-
-  async function handleUnacceptAnswer(answerId) {
-    try {
-      await unacceptAnswer(queryId, answerId)
-      notifySuccess('Resolution removed.')
-      await refresh()
-    } catch (err) {
-      notifyError(err.response?.data?.message || 'Could not remove resolution.')
-    }
-  }
-
-  async function handlePostReply() {
-    if (!reply.trim()) {
-      notifyError('Write something before posting.')
-      return
-    }
-    if (reply.trim().length < 15) {
-      notifyError('Your reply must be at least 15 characters.')
-      return
-    }
+  const handlePostReply = async () => {
+    if (posting) return
     setPosting(true)
     try {
-      await postAnswer(queryId, reply.trim())
-      setReply('')
-      notifySuccess('Your reply has been posted.')
-      await refresh()
-    } catch (err) {
-      notifyError(err.response?.data?.message || 'Could not post your reply.')
+      const result = await postAnswer(queryId, reply)
+      if (result.success) {
+        notifySuccess('Reply posted successfully')
+        load()
+        setReply('')
+      } else {
+        notifyError(result.message)
+      }
+    } catch (error) {
+      console.error(error)
+      notifyError('Failed to post reply')
     } finally {
       setPosting(false)
     }
   }
 
-  async function handleReportSubmit({ reason, description }) {
-    if (!reason) {
-      notifyError('Please select a reason for reporting.')
-      return
+  const handleResolveQuery = async () => {
+    if (resolving) return
+    setResolving(true)
+    try {
+      const result = await resolveQuestion(queryId)
+      if (result.success) {
+        notifySuccess('Query resolved successfully')
+        load()
+      } else {
+        notifyError(result.message)
+      }
+    } catch (error) {
+      console.error(error)
+      notifyError('Failed to resolve query')
+    } finally {
+      setResolving(false)
     }
+  }
+
+  const handleReport = async () => {
+    if (reporting) return
     setReporting(true)
     try {
-      await reportContent({
-        targetType: reportTarget.type,
-        targetId: reportTarget.id,
-        reason,
-        description,
-      })
-      notifySuccess('Report submitted. Thank you.')
-      setReportTarget(null)
-    } catch (err) {
-      notifyError(err.response?.data?.message || 'Could not submit report.')
+      const result = await reportContent(reportTarget.type, reportTarget.id)
+      if (result.success) {
+        notifySuccess('Report submitted successfully')
+      } else {
+        notifyError(result.message)
+      }
+    } catch (error) {
+      console.error(error)
+      notifyError('Failed to submit report')
     } finally {
       setReporting(false)
     }
   }
 
-  if (loading) {
-    return (
-      <div className="flex flex-1 items-center justify-center p-10 text-[13px] text-text-muted">
-        <Loader className="mr-2 h-4 w-4 animate-spin" /> Loading thread…
-      </div>
-    )
-  }
-
-  if (!data?.question) {
-    return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-4 p-10">
-        <p className="text-[13px] text-text-muted">This query could not be found.</p>
-        <button
-          type="button"
-          onClick={() => navigate('/dashboard')}
-          className="flex items-center gap-2 text-[13px] font-medium text-brand transition hover:underline"
-        >
-          <ArrowLeft className="h-4 w-4" strokeWidth={1.8} /> Back to dashboard
-        </button>
-      </div>
-    )
-  }
-
-  const { question, answers, comments = [] } = data
-  const statusLabel = STATUS_LABEL[question.status] || 'Active'
-  const isResolved = statusLabel === 'Resolved'
-  const isOwner = question.author_id === user?.userId
-  const hasAcceptedAnswer = answers.some(a => a.is_accepted)
-
-  // Group comments by their parent answer
-  const commentsByAnswer = {}
-  for (const c of comments) {
-    (commentsByAnswer[c.answer_id] ||= []).push(c)
-  }
-
-  const steps = [
-    { label: 'Submitted', meta: fmtDate(question.created_at), done: true },
-    { label: 'In Discussion', meta: `${answers.length} ${answers.length === 1 ? 'reply' : 'replies'}`, done: answers.length > 0 },
-    { label: 'Resolved', meta: isResolved ? `Closed ${fmtDate(question.updated_at)}` : 'Pending', done: isResolved, green: true },
-  ]
-
-  return (
-    <div className="relative mx-auto w-full max-w-[1100px] px-8 py-8">
-      <div className="flex gap-10">
-        {/* ── Main column ─────────────────────────────────────────── */}
-        <div className="min-w-0 flex-1">
-          {/* Header */}
-          <div className="mb-10">
-            <div className="mb-4 flex items-start justify-between gap-4">
-              <h1 className="font-display text-[28px] font-bold leading-tight text-text-primary">
-                {question.title}
-              </h1>
-              {/* Owner: mark solved / reopen */}
-              {isOwner && (
-                isResolved ? (
-                  <Button
-                    variant="secondary"
-                    className={`shrink-0 gap-2 text-[12px] transition ${resolving ? 'cursor-not-allowed opacity-80' : ''}`}
-                    onClick={() => handleResolveToggle(false)}
-                    disabled={resolving}
-                  >
-                    {resolving ? (
-                      <>
-                        <Loader className="h-3.5 w-3.5 animate-spin" /> Reopening...
-                      </>
-                    ) : (
-                      <>
-                        <RotateCcw className="h-3.5 w-3.5" strokeWidth={1.8} /> Reopen
-                      </>
-                    )}
-                  </Button>
-                ) : (
-                  <Button
-                    variant="secondary"
-                    className={`shrink-0 gap-2 border-brand text-[12px] text-brand hover:border-brand hover:text-brand transition ${resolving ? 'cursor-not-allowed opacity-80' : ''}`}
-                    onClick={() => handleResolveToggle(true)}
-                    disabled={resolving}
-                  >
-                    {resolving ? (
-                      <>
-                        <Loader className="h-3.5 w-3.5 animate-spin" /> Resolving...
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle className="h-3.5 w-3.5" strokeWidth={1.8} /> Mark as Resolved
-                      </>
-                    )}
-                  </Button>
-                )
-              )}
-            </div>
-            <div className="flex flex-wrap items-center gap-4 text-[13px] text-text-secondary">
-              <span className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-[12px] font-bold ${isResolved ? 'bg-success/10 text-success' : 'bg-brand/10 text-brand'
-                }`}>
-                <CheckCircle2 className="h-4 w-4" strokeWidth={1.8} /> {statusLabel}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <strong className="font-semibold text-text-primary">{question.author_name}</strong>
-                opened this on {fmtDate(question.created_at)}
-              </span>
-            </div>
-          </div>
-
-          {/* Thread */}
-          <div className="relative pl-[60px]">
-            <div className="absolute bottom-0 left-6 top-6 w-px bg-bg-tertiary" aria-hidden="true" />
-
-            {/* Original post */}
-            <ThreadItem
-              authorName={question.author_name}
-              isSelf={question.author_id === user?.userId}
-              date={fmtDate(question.created_at)}
-              body={question.body}
-              isOriginal
-              moderationState="visible"
-              attachments={question.attachments}
-              onReport={() => setReportTarget({ type: 'question', id: question.question_id })}
-            />
-
-            {/* Answers */}
-            {answers.length === 0 && (
-              <p className="mb-8 text-[13px] text-text-muted">No replies yet — be the first to respond.</p>
-            )}
-            {answers.map(ans => {
-              const moderationState = ans.moderation_state || 'visible'
-              const hidden = moderationState !== 'visible'
-              return (
-                <ThreadItem
-                  key={ans.answer_id}
-                  authorName={ans.author_name}
-                  isSelf={ans.author_id === user?.userId}
-                  date={fmtDate(ans.created_at)}
-                  body={ans.body}
-                  moderationState={moderationState}
-                  accepted={ans.is_accepted}
-                  score={(ans.upvotes ?? 0) - (ans.downvotes ?? 0)}
-                  myVote={ans.my_vote ?? 0}
-                  canAccept={isOwner && !hasAcceptedAnswer && !hidden && ans.author_id !== user?.userId}
-                  canUnaccept={user?.role === 'ADMIN' && ans.is_accepted && !isResolved}
-                  onAccept={() => handleAcceptAnswer(ans.answer_id)}
-                  onUnaccept={() => handleUnacceptAnswer(ans.answer_id)}
-                  onVoteUp={() => handleVote(ans.answer_id, 'up')}
-                  onVoteDown={() => handleVote(ans.answer_id, 'down')}
-                  authorRole={ans.author_role}
-                  attachments={ans.attachments}
-                  onReport={() => setReportTarget({ type: 'answer', id: ans.answer_id })}
-                  onEdit={body => handleEditAnswer(ans.answer_id, body)}
-                  onDelete={() => handleDeleteAnswer(ans.answer_id)}
-                  createdAt={ans.created_at}
-                >
-                  {!hidden && (
-                    <AnswerComments
-                      answerId={ans.answer_id}
-                      comments={commentsByAnswer[ans.answer_id] || []}
-                      currentUserId={user?.userId}
-                      locked={isResolved}
-                      onSubmit={handleComment}
-                      onEdit={handleEditComment}
-                      onDelete={handleDeleteComment}
-                    />
-                  )}
-                </ThreadItem>
-              )
-            })}
-
-            {/* Reply box — closed once the question is resolved */}
-            {isResolved ? (
-              <div className="relative mt-8">
-                <div className="rounded-xl border border-dashed border-border bg-bg-tertiary px-5 py-4 text-center text-[13px] text-text-muted">
-                  This question is resolved — new replies are closed.
-                </div>
-              </div>
-            ) : (
-              <div className="relative mt-8">
-                <div className="absolute -left-[54px] top-2.5 flex h-9 w-9 items-center justify-center rounded-lg bg-brand text-[12px] font-bold text-white ring-4 ring-border-light">
-                  {initialsOf(user?.name)}
-                </div>
-                <div className="rounded-xl border border-border-light bg-bg-card p-4 shadow-sm">
-                  <div className="mb-2 flex items-center justify-between border-b border-border-light pb-2">
-                    <div className="flex gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setReplyTab('write')}
-                        className={`text-[11px] font-bold pb-0.5 transition ${replyTab === 'write' ? 'border-b-2 border-brand text-brand' : 'text-text-muted hover:text-text-primary'}`}
-                      >
-                        Write
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setReplyTab('preview')}
-                        className={`text-[11px] font-bold pb-0.5 transition ${replyTab === 'preview' ? 'border-b-2 border-brand text-brand' : 'text-text-muted hover:text-text-primary'}`}
-                      >
-                        Preview
-                      </button>
-                    </div>
-                  </div>
-
-                  {replyTab === 'write' ? (
-                    <textarea
-                      value={reply}
-                      onChange={e => setReply(e.target.value)}
-                      placeholder="Drop your resolution, comment, or suggestions here. Markdown is supported…"
-                      className="min-h-[80px] w-full resize-y text-[13px] leading-6 text-text-primary outline-none placeholder:text-text-muted"
-                    />
-                  ) : (
-                    <div
-                      className="markdown-body min-h-[80px] w-full text-[13px] text-text-secondary overflow-y-auto"
-                      dangerouslySetInnerHTML={{ __html: parseMarkdown(reply) || '<em class="text-text-muted">Nothing to preview</em>' }}
-                    />
-                  )}
-
-                  <div className="mt-2 flex justify-end border-t border-border-light pt-4">
-                    <button
-                      type="button"
-                      onClick={handlePostReply}
-                      disabled={posting}
-                      className="rounded-lg bg-brand px-5 py-2 text-[13px] font-semibold text-white transition hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {posting ? 'Posting…' : 'Submit Reply'}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* ── Side column ─────────────────────────────────────────── */}
-        <div className="hidden w-[280px] shrink-0 flex-col gap-6 lg:flex">
-          {/* Tags */}
-          {(question.tags || []).length > 0 && (
-            <div className="rounded-lg border border-border-light bg-bg-card p-6">
-              <h4 className="mb-4 text-[11px] font-extrabold uppercase tracking-wide text-text-muted">Tags</h4>
-              <div className="flex flex-wrap gap-2">
-                {question.tags.map(t => (
-                  <span
-                    key={t}
-                    className="rounded-md bg-brand/10 px-2.5 py-1 text-[12px] font-semibold capitalize text-brand"
-                  >
-                    {t}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Query Status */}
-          <div className="rounded-lg border border-border-light bg-bg-card p-6">
-            <h4 className="mb-6 text-[11px] font-extrabold uppercase tracking-wide text-text-muted">Query Status</h4>
-            <div className="relative pl-5">
-              <div className="absolute bottom-2.5 left-2.5 top-2.5 w-px bg-bg-tertiary" />
-              {steps.map((s, i) => (
-                <div key={i} className={`relative ${i < steps.length - 1 ? 'mb-6' : ''}`}>
-                  <div
-                    className={`absolute -left-5 top-0 flex h-5 w-5 items-center justify-center rounded-full text-white ${s.done ? (s.green ? 'bg-success' : 'bg-brand') : 'bg-bg-tertiary'
-                      }`}
-                  >
-                    <Check className="h-3 w-3" strokeWidth={3} />
-                  </div>
-                  <div className="pl-2">
-                    <h5 className={`text-[13px] font-bold ${s.green && s.done ? 'text-success' : 'text-text-primary'}`}>{s.label}</h5>
-                    <p className="text-[11px] text-text-muted">{s.meta}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Related Recent Queries */}
-          <div className="rounded-lg border border-border-light bg-bg-card p-6">
-            <h4 className="mb-5 text-[11px] font-extrabold uppercase tracking-wide text-text-muted">Related Recent Queries</h4>
-            {related.length === 0 ? (
-              <p className="text-[12px] text-text-muted">No related queries found.</p>
-            ) : (
-              <ul className="flex flex-col gap-3">
-                {related.map(q => (
-                  <li key={q.question_id}>
-                    <button
-                      type="button"
-                      title={q.title}
-                      onClick={() => navigate(`/query/${q.question_id}`, {
-                        state: { activeSidebarNav },
-                      })}
-                      className="flex w-full items-center gap-2 text-left transition hover:text-brand"
-                    >
-                      <MessageCircle className="h-3.5 w-3.5 shrink-0 text-text-muted" strokeWidth={1.8} />
-                      <span className="truncate text-[13px] font-medium text-text-secondary">{q.title}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <ReportModal
-        open={!!reportTarget}
-        submitting={reporting}
-        targetType={reportTarget?.type}
-        onClose={() => setReportTarget(null)}
-        onSubmit={handleReportSubmit}
-      />
-    </div>
-  )
-}
-
-// ── Thread item (OP or answer) ──────────────────────────────────────────────
-function ThreadItem({
-  authorName, isSelf, authorRole, date, body, isOriginal, accepted, score, myVote = 0,
-  moderationState = 'visible', canAccept = false, canUnaccept = false, onAccept, onUnaccept,
-  onVoteUp, onVoteDown, onReport,
-  onEdit, onDelete, createdAt, attachments = [], children,
-}) {
-  const initials = initialsOf(authorName)
-  const hidden = moderationState !== 'visible'
-  const tombstone = moderationState === 'deleted'
-    ? `This reply from ${authorName} was deleted.`
-    : `This reply from ${authorName} is under review.`
-
-  const [isEditing, setIsEditing] = useState(false)
-  const [editText, setEditText] = useState(body || '')
-  const [editBusy, setEditBusy] = useState(false)
-  const [deleteBusy, setDeleteBusy] = useState(false)
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  // Captured once on mount; the 15-min edit window is generous and the backend
-  // enforces the real limit, so we avoid calling Date.now() during render.
-  const [mountedAt] = useState(() => Date.now())
-
-  const isEditable = () => {
-    if (!isSelf) return false
-    if (hidden) return false
-    if (!createdAt) return false
-    const createdTime = new Date(createdAt).getTime()
-    const diffMs = mountedAt - createdTime
-    return diffMs <= 15 * 60 * 1000
+  const sanitizeHtml = (html) => {
+    return DOMPurify.sanitize(html)
   }
 
   return (
-    <div className="relative mb-8">
-      <div className={`absolute -left-[60px] top-0 flex h-12 w-12 items-center justify-center rounded-lg text-[14px] font-bold text-white ring-4 ring-border-light ${hidden ? 'bg-text-muted' : 'bg-[#191c1d]'}`}>
-        {initials}
-      </div>
-
-      <div className={`overflow-hidden rounded-xl border bg-bg-card shadow-sm ${hidden ? 'border-dashed border-border' : 'border-border-light'}`}>
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-border-light px-5 py-3">
-          <div className="flex items-center gap-3">
-            <span className="text-[14px] font-bold text-text-primary">
-              {authorName}{isSelf && ' (You)'}
-            </span>
-            <span className="text-[12px] text-text-muted">
-              {isOriginal ? 'opened this' : 'commented'} {date}
-            </span>
-          </div>
-          {accepted && !hidden && (
-            <span className="flex items-center gap-1.5 text-[11px] font-bold text-success">
-              <Check className="h-3.5 w-3.5" strokeWidth={3} /> SOLUTION
-            </span>
-          )}
-          {hidden && (
-            <span className={`flex items-center gap-1.5 text-[11px] font-bold ${moderationState === 'deleted' ? 'text-text-muted' : 'text-warning'}`}>
-              <AlertTriangle className="h-3.5 w-3.5" strokeWidth={1.8} />
-              {moderationState === 'deleted' ? 'DELETED' : 'UNDER REVIEW'}
-            </span>
-          )}
-        </div>
-
-        {/* Body — tombstone when hidden */}
-        {hidden ? (
-          <p className="px-5 py-5 text-[13px] italic leading-6 text-text-muted">{tombstone}</p>
-        ) : isEditing ? (
-          <div className="px-5 py-5">
-            <textarea
-              autoFocus
-              value={editText}
-              onChange={e => setEditText(e.target.value)}
-              className="min-h-[100px] w-full resize-y rounded-lg border border-border-light p-3 text-[14px] leading-6 text-text-primary outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15"
-            />
-            <div className="mt-3 flex gap-2">
-              <Button
-                variant="primary"
-                onClick={async () => {
-                  if (!editText.trim()) return
-                  setEditBusy(true)
-                  try {
-                    if (onEdit) {
-                      await onEdit(editText.trim())
-                    }
-                    setIsEditing(false)
-                  } finally {
-                    setEditBusy(false)
-                  }
-                }}
-                disabled={editBusy}
-                className="min-h-9 px-4 text-xs font-semibold cursor-pointer"
-              >
-                {editBusy ? 'Saving…' : 'Save'}
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={() => setIsEditing(false)}
-                className="min-h-9 px-4 text-xs font-medium cursor-pointer"
-              >
-                Cancel
-              </Button>
+    <div>
+      {data && (
+        <div>
+          <h1>{data.question.title}</h1>
+          <p dangerouslySetInnerHTML={{ __html: sanitizeHtml(parseMarkdown(data.question.content)) }} />
+          {data.answers.map((answer) => (
+            <div key={answer.id}>
+              <h2>{answer.user.name}</h2>
+              <p dangerouslySetInnerHTML={{ __html: sanitizeHtml(parseMarkdown(answer.content)) }} />
             </div>
+          ))}
+          <div>
+            <input type="text" value={reply} onChange={handleReplyChange} />
+            <button onClick={handlePostReply}>Post Reply</button>
           </div>
-        ) : (
-          <div className="px-5 py-5">
-            <div
-              className="markdown-body text-[14px] leading-6 text-text-secondary"
-              dangerouslySetInnerHTML={{ __html: parseMarkdown(body) }}
-            />
-            {attachments.length > 0 && (
-              <div className="mt-4 rounded-2xl border border-border-light bg-bg-primary p-4">
-                <h4 className="mb-3 text-[13px] font-semibold text-text-primary">Attachments</h4>
-                <ul className="space-y-2">
-                  {attachments.map((attachment) => {
-                    const downloadUrl = attachment.download_url?.startsWith('/api') && API_BASE_URL
-                      ? `${API_BASE_URL}${attachment.download_url}`
-                      : attachment.download_url
-
-                    const previewUrl = `${downloadUrl}?preview=true`
-
-                    return (
-                      <li key={attachment.attachment_id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-lg border border-border-light bg-bg-card px-4 py-3">
-                        <span className="text-[13px] font-medium text-text-primary truncate max-w-[280px] sm:max-w-[400px]" title={attachment.file_name}>
-                          {attachment.file_name}
-                        </span>
-                        <div className="flex gap-2">
-                          <a
-                            href={previewUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center justify-center rounded-lg bg-brand/10 px-3 py-1.5 text-[11px] font-bold text-brand transition-colors hover:bg-brand/20"
-                          >
-                            Preview
-                          </a>
-                          <a
-                            href={downloadUrl}
-                            download={attachment.file_name}
-                            className="inline-flex items-center justify-center rounded-lg border border-border-light px-3 py-1.5 text-[11px] font-bold text-text-secondary transition-colors hover:bg-bg-tertiary"
-                          >
-                            Download
-                          </a>
-                        </div>
-                      </li>
-                    )
-                  })}
-                </ul>
-              </div>
-            )}
+          <div>
+            <button onClick={handleResolveQuery}>Resolve Query</button>
           </div>
-        )}
-
-        {/* Footer (visible answers and original question) */}
-        {!hidden && (
-          <div className="flex items-center justify-between border-t border-border-light bg-bg-tertiary px-5 py-3">
-            {!isOriginal ? (
-              <div className="flex items-center gap-2 text-[14px] font-bold text-text-primary">
-                <button
-                  type="button"
-                  onClick={onVoteUp}
-                  title={myVote === 1 ? 'Remove upvote' : 'Upvote'}
-                  className={`transition ${myVote === 1 ? 'text-brand' : 'text-text-muted hover:text-brand'}`}
-                >
-                  <ChevronUp className="h-5 w-5" strokeWidth={myVote === 1 ? 3 : 2} />
-                </button>
-                <span className={myVote === 1 ? 'text-brand' : myVote === -1 ? 'text-danger' : ''}>{score}</span>
-                <button
-                  type="button"
-                  onClick={onVoteDown}
-                  title={myVote === -1 ? 'Remove downvote' : 'Downvote'}
-                  className={`transition ${myVote === -1 ? 'text-danger' : 'text-text-muted hover:text-danger'}`}
-                >
-                  <ChevronDown className="h-5 w-5" strokeWidth={myVote === -1 ? 3 : 2} />
-                </button>
-              </div>
-            ) : (
-              <div />
-            )}
-            <div className="flex items-center gap-4">
-              {/* Owner: unaccept this answer (only when question is reopened) */}
-              {!isOriginal && canUnaccept && (
-                <button
-                  type="button"
-                  onClick={onUnaccept}
-                  className="flex items-center gap-1.5 text-[12px] font-bold text-warning transition hover:text-danger"
-                  title="Remove accepted resolution"
-                >
-                  <RotateCcw className="h-3.5 w-3.5" strokeWidth={2} /> UNACCEPT
-                </button>
-              )}
-              {/* Owner: accept this answer as the resolution */}
-              {!isOriginal && canAccept && (
-                <button
-                  type="button"
-                  onClick={onAccept}
-                  className="flex items-center gap-1.5 text-[12px] font-bold text-success transition hover:text-success"
-                >
-                  <Check className="h-3.5 w-3.5" strokeWidth={3} /> MARK AS RESOLUTION
-                </button>
-              )}
-              {isSelf ? (
-                isOriginal ? (
-                  // Edit/delete of the original question is out of scope here;
-                  // keep the report-own-question affordance from the report feature.
-                  <span className="text-[11px] italic text-text-muted">
-                    Cannot report own question
-                  </span>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    {isEditable() && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsEditing(true)
-                          setEditText(body)
-                        }}
-                        className="flex items-center gap-1.5 rounded-lg border border-border-light bg-bg-secondary px-2.5 py-1 text-[11px] font-semibold text-text-secondary transition-all duration-200 hover:border-brand hover:text-brand hover:bg-brand/5 shadow-xs cursor-pointer"
-                      >
-                        <Pencil className="h-3.5 w-3.5 text-text-muted transition-colors hover:text-brand" strokeWidth={1.8} />
-                        <span className="leading-none">Edit</span>
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => setShowDeleteConfirm(true)}
-                      className="flex items-center gap-1.5 rounded-lg border border-border-light bg-bg-secondary px-2.5 py-1 text-[11px] font-semibold text-text-secondary transition-all duration-200 hover:border-danger hover:text-danger hover:bg-danger/5 shadow-xs cursor-pointer"
-                    >
-                      <Trash2 className="h-3.5 w-3.5 text-text-muted transition-colors hover:text-danger" strokeWidth={1.8} />
-                      <span className="leading-none">Delete</span>
-                    </button>
-                  </div>
-                )
-              ) : authorRole === 'ADMIN' ? (
-                <span className="text-[11px] italic text-text-muted">Cannot report admin</span>
-              ) : (
-                <button
-                  type="button"
-                  onClick={onReport}
-                  className="flex items-center gap-1.5 text-[12px] font-bold text-text-muted transition hover:text-danger"
-                >
-                  <AlertTriangle className="h-3.5 w-3.5" strokeWidth={1.8} /> REPORT
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Comments / replies under this answer */}
-        {!isOriginal && children}
-      </div>
-
-      {/* Premium Deletion Confirmation Modal */}
-      <Modal
-        isOpen={showDeleteConfirm}
-        onClose={() => setShowDeleteConfirm(false)}
-        title="Delete Answer"
-      >
-        <div className="flex flex-col items-center text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-red-600 mb-4 dark:bg-red-950/30 dark:text-red-400">
-            <AlertTriangle className="h-6 w-6" strokeWidth={1.8} />
-          </div>
-          <h3 className="text-[16px] font-bold text-text-primary mb-2">Delete Answer</h3>
-          <p className="text-[13px] text-text-muted mb-6 leading-5">
-            Are you sure you want to delete this answer? This action cannot be undone.
-          </p>
-          <div className="flex w-full gap-3 justify-center">
-            <Button
-              variant="secondary"
-              onClick={() => setShowDeleteConfirm(false)}
-              className="flex-1 py-2 text-xs font-semibold cursor-pointer"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={async () => {
-                setDeleteBusy(true)
-                try {
-                  if (onDelete) {
-                    await onDelete()
-                  }
-                  setShowDeleteConfirm(false)
-                } finally {
-                  setDeleteBusy(false)
-                }
-              }}
-              disabled={deleteBusy}
-              className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 text-xs font-semibold focus:ring-red-500 cursor-pointer disabled:opacity-60"
-            >
-              {deleteBusy ? 'Deleting…' : 'Delete'}
-            </Button>
+          <div>
+            <button onClick={handleReport}>Report</button>
           </div>
         </div>
-      </Modal>
+      )}
     </div>
   )
 }

@@ -15,15 +15,15 @@ export async function getResolverQueue(req, res, next) {
     const filter = { moderation_status: 'approved' }
 
     if (req.query.category) {
-      filter.category = req.query.category
+      filter['category'] = req.query.category
     }
     if (req.query.tag) {
-      filter.tags = req.query.tag
+      filter['tags'] = req.query.tag
     }
     if (req.query.unanswered !== 'false') {
-      filter.status = 'unanswered'
+      filter['status'] = 'unanswered'
     } else {
-      filter.status = { $ne: 'removed' }
+      filter['status'] = { $ne: 'removed' }
     }
 
     const sort =
@@ -48,7 +48,10 @@ export async function getResolverQueue(req, res, next) {
 export async function getResolverStats(req, res, next) {
   try {
     const createdAt = getCreatedAtFilter(req.query.from, req.query.to)
-    const filter = { author_id: req.user.userId, ...(createdAt && { created_at: createdAt }) }
+    const filter = { 
+      author_id: req.user.userId, 
+      ...(createdAt && { created_at: createdAt }) 
+    }
     const sparkFilter = {
       user_id: req.user.userId,
       ...(createdAt && { created_at: createdAt }),
@@ -56,7 +59,11 @@ export async function getResolverStats(req, res, next) {
 
     const [answersCount, acceptedAnswersCount, spark, profile] = await Promise.all([
       Answer.countDocuments(filter),
-      Answer.countDocuments({ ...filter, is_accepted: true }),
+      Answer.countDocuments({ 
+        author_id: req.user.userId, 
+        is_accepted: true, 
+        ...(createdAt && { created_at: createdAt }) 
+      }),
       SparkTransaction.aggregate([
         { $match: sparkFilter },
         { $group: { _id: null, total: { $sum: '$points' } } },
