@@ -34,7 +34,7 @@ const projectConfig = readProjectConfig()
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   define: {
-    __PROJECT_NAME__: JSON.stringify(projectConfig.project_name || ''),
+    __PROJECT_NAME__: JSON.stringify(projectConfig.project_name ?? ''),
     __PROJECT_TAGLINE__: JSON.stringify(projectConfig.tagline || ''),
     __PROJECT_OWNER__: JSON.stringify(projectConfig.owner || ''),
   },
